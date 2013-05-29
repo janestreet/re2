@@ -1,0 +1,12 @@
+# OASIS_START
+# DO NOT EDIT (digest: 8fb879128716b8b2c0ddb72808047c9b)
+version = "109.24.00"
+description = "OCaml bindings for RE2"
+requires = "core pa_ounit bin_prot sexplib threads"
+archive(byte) = "re2.cma"
+archive(byte, plugin) = "re2.cma"
+archive(native) = "re2.cmxa"
+archive(native, plugin) = "re2.cmxs"
+exists_if = "re2.cma"
+# OASIS_STOP
+
