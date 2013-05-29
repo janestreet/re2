@@ -6,8 +6,8 @@ let dispatch = function
     rule "Generate lib/options.ml"
       ~prod:"lib/options.ml"
       ~deps:["lib/options.mlp"; "lib/enum_x_macro.h"]
-      (fun _ _ ->
-        Cmd (S[A"cpp"; A"-o"; P"lib/options.ml"; P"lib/options.mlp"]));
+      (fun _ _ -> Cmd (S[A"gcc"; A"-E"; A"-P"; A"-x"; A"c";
+                         P"lib/options.mlp"; A"-o"; P"lib/options.ml"]));
     
     flag ["ocaml"; "link"; "library"; "native"] (S[A"-cclib"; A"-Llib";
                                                    A"-cclib"; A"-lre2_stubs"]);

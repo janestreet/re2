@@ -5,12 +5,8 @@ CXXFLAGS += -I $(RE2_HOME)/re2
 
 all: libre2_stubs.a dllre2_stubs.so
 
-libre2_stubs.a: stubs.o $(LIBRE2)
-	cp $(LIBRE2) $@
-	ar r $@ stubs.o
-
-dllre2_stubs.so: stubs.o $(LIBRE2)
-	g++ -shared stubs.o $(LIBRE2) -o $@
+dllre2_stubs.so libre2_stubs.a: stubs.o $(LIBRE2)
+	ocamlmklib -oc re2_stubs stubs.o $(LIBRE2) -lstdc++
 
 stubs.o: stubs.cpp stubs.h util.h enum_x_macro.h
 	g++ -O2 -DPIC -fPIC -g -pipe -DCAML_NAME_SPACE -Wall -Wextra -Wunused -Werror \
