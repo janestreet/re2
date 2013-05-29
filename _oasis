@@ -16,7 +16,7 @@ XStdFilesREADME:  false
 BuildTools:       ocamlbuild, camlp4o, make, cpp, rsync
 
 PreBuildCommand:      ./_prebuild
-PostInstallCommand:   ocamlfind install -add -dll re2 _build/lib/dllre2_stubs.so 
+PostInstallCommand:   ocamlfind install -add re2 _build/lib/libre2_stubs.a -dll _build/lib/dllre2_stubs.so 
 
 Library re2
   Path:               lib

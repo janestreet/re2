@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 mkdir -p _build/lib
 rsync -a lib/libre2 lib/Makefile lib/*.cpp lib/*.h _build/lib
