@@ -7,6 +7,8 @@ all: libre2_stubs.a dllre2_stubs.so
 
 dllre2_stubs.so libre2_stubs.a: stubs.o $(LIBRE2)
 	ocamlmklib -oc re2_stubs stubs.o $(LIBRE2) -lstdc++
+	rm libre2_stubs.a # ocamlmklib just includes $(LIBRE2) inside the stubs archive
+	cp $(LIBRE2) libre2_stubs.a && ar r libre2_stubs.a stubs.o
 
 stubs.o: stubs.cpp stubs.h util.h enum_x_macro.h
 	g++ -O2 -DPIC -fPIC -g -pipe -DCAML_NAME_SPACE -Wall -Wextra -Wunused -Werror \
