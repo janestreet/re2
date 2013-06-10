@@ -1,0 +1,44 @@
+(* OASIS_START *)
+(* DO NOT EDIT (digest: dcd1ec30b24ecab11feea1f4ee5af69b) *)
+This is the INSTALL file for the re2 distribution.
+
+This package uses OASIS to generate its build system. See section OASIS for
+full information. 
+
+Dependencies
+============
+
+In order to compile this package, you will need:
+* ocaml (>= 4.00.0) for all, doc re2
+* findlib (>= 1.3.2)
+* core (>= 109.28.00)
+* pa_ounit (>= 109.18.00)
+* bin_prot (>= 109.15.00)
+* sexplib (>= 109.20.00)
+* comparelib (>= 109.15.00)
+* make for all, doc re2
+* cpp for all, doc re2
+* rsync for all, doc re2
+
+Installing
+==========
+
+1. Uncompress the source archive and go to the root of the package
+2. Run 'ocaml setup.ml -configure'
+3. Run 'ocaml setup.ml -build'
+4. Run 'ocaml setup.ml -install'
+
+Uninstalling
+============
+
+1. Go to the root of the package 
+2. Run 'ocaml setup.ml -uninstall'
+
+OASIS
+=====
+
+OASIS is a program that generates a setup.ml file using a simple '_oasis'
+configuration file. The generated setup only depends on the standard OCaml
+installation: no additional library is required.
+
+(* OASIS_STOP *)
