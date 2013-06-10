@@ -9,7 +9,7 @@
 uint16_t bitfield_of_options(const RE2::Options& o) {
   uint16_t options = 0;
   int pos = 15;
-#define PACK(V) if (V) { options |= (uint16_t) (1 << pos); } pos--;
+#define PACK(V) if (V) { options |= (uint16_t) (1 << pos); } --pos;
 #define X(_u,FIRST,REST,_uu) PACK(o.FIRST##REST())
 #define X__MAXMEM(_u,_uu,_uuu,_uuuu)
 #define X__ENCODING(_u,FIRST,REST,_uu,_uuu,TRANSLATION,_uuuu)  PACK(o.FIRST##REST() TRANSLATION)

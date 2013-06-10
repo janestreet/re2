@@ -1,4 +1,4 @@
-RE2_HOME=libre2/
+RE2_HOME=libre2
 LIBRE2=$(RE2_HOME)/obj/libre2.a
 
 CXXFLAGS += -I $(RE2_HOME)/re2
