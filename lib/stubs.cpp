@@ -219,9 +219,8 @@ extern "C" {
    * - (string * int) list is the Map.to_alist of the submatch (name, index) Map.t
    */
   CAMLprim value mlre2__create_re(value v_options, value v_pattern) {
-    value v_retval;
+    value v_retval, v_compile_error;
     const char * c_pat = String_val(v_pattern);
-    const char * compile_error = NULL;
     RE2::Options opt;
     RE2* compiled = NULL;
 
@@ -242,11 +241,17 @@ extern "C" {
     compiled = new RE2(c_pat, opt);
 
     if (!compiled->ok()) {
-      compile_error = compiled->error().c_str();
+      /* Warning
+         from this point on it's no longer safe to access v_options or
+         v_pattern as the GC might be invoked from caml_copy_string and
+         move those values (as we haven't registered the paramters they
+         wouldn't get updated).  This is fine because we don't access
+         them before we call caml_raise_with_arg. */
+      v_compile_error = caml_copy_string(compiled->error().c_str());
       delete compiled;
       compiled = NULL;
-      caml_raise_with_string(*caml_named_value("mlre2__Regex_compile_failed"),
-          compile_error);
+      caml_raise_with_arg(*caml_named_value("mlre2__Regex_compile_failed"),
+          v_compile_error);
     }
 
     v_retval = caml_alloc_custom(&mlre2__custom_regex_ops, sizeof(compiled),
