@@ -1,6 +1,6 @@
 
 (** N.B. when I say "[x] is a convenience function around [y]", that just means [x] can be
-    though of in terms of [y].  In fact, [x] may not be implemented on top of [y], because
+    thought of in terms of [y].  In fact, [x] may not be implemented on top of [y], because
     in many cases (e.g., find/find_all) the convenience functions assume certain defaults
     that make it more efficient to drop down into C directly.
 *)

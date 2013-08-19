@@ -1,5 +1,20 @@
 open Core.Std
 
+(** These are OCaml bindings for Google's re2 library.  Quoting from the re2 homepage:
+
+    > RE2 is a fast, safe, thread-friendly alternative to backtracking regular expression
+    > engines like those used in PCRE, Perl, and Python. It is a C++ library.
+
+    > Unlike most automata-based engines, RE2 implements almost all the common Perl and
+    > PCRE features and syntactic sugars. It also finds the leftmost-first match, the same
+    > match that Perl would, and can return submatch information. The one significant
+    > exception is that RE2 drops support for backreferences¹ and generalized zero-width
+    > assertions, because they cannot be implemented efficiently. The syntax page gives
+    > full details.
+
+    Syntax reference: http://code.google.com/p/re2/wiki/Syntax
+ **)
+
 (** Although OCaml strings may legally have internal null bytes, it is expensive to check
     for them, so this library just assumes that it will never see such a string.  The
     failure mode is the search stops early, which isn't bad considering how rare internal
@@ -54,7 +69,9 @@ module Options : Options.S
 val create     : ?options:Options.t list -> string -> t Or_error.t
 val create_exn : ?options:Options.t list -> string -> t
 
-(* CR201301 datkin for dpowers: include Sexpable? *)
+(* XCR201301 datkin for dpowers: include Sexpable?
+   moconnor: It seems like [type t] has [with sexp] now.
+*)
 include Stringable with type t := t
 
 (** [num_submatches t] returns 1 + the number of open-parens in the pattern.
