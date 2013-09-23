@@ -69,9 +69,6 @@ module Options : Options.S
 val create     : ?options:Options.t list -> string -> t Or_error.t
 val create_exn : ?options:Options.t list -> string -> t
 
-(* XCR201301 datkin for dpowers: include Sexpable?
-   moconnor: It seems like [type t] has [with sexp] now.
-*)
 include Stringable with type t := t
 
 (** [num_submatches t] returns 1 + the number of open-parens in the pattern.
