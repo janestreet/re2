@@ -496,9 +496,10 @@ let dispatch = function
       ~deps:["lib/options.mlp"; "lib/enum_x_macro.h"]
       (fun _ _ -> Cmd (S[A"gcc"; A"-E"; A"-P"; A"-x"; A"c";
                          P"lib/options.mlp"; A"-o"; P"lib/options.ml"]));
-    
+
     flag ["ocaml"; "link"; "library"; "native"] (S[A"-cclib"; A"-Llib";
-                                                   A"-cclib"; A"-lre2_stubs"]);
+                                                   A"-cclib"; A"-lre2_stubs";
+                                                   A"-cclib"; A"-lstdc++"]);
     flag ["ocaml"; "link"; "library"; "byte"]   (S[A"-dllib"; A"dllre2_stubs.so"]);
   | _ ->
     ()
