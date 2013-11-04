@@ -115,7 +115,7 @@ extern "C" {
       caml_failwith("cannot serialize regexes with patterns longer than INT_MAX");
     }
     caml_serialize_int_4((signed int) len);
-    caml_serialize_block_1((char *) re->pattern().c_str(), len);
+    caml_serialize_block_1((char *) re->pattern().c_str(), (intnat) len);
     caml_serialize_int_4(re->options().max_mem());
     caml_serialize_int_2(bitfield_of_options(re->options()));
 #ifdef DEBUG
@@ -128,8 +128,10 @@ extern "C" {
 
   unsigned long mlre2__custom_regex_deserialize(void * dst) {
     int len = caml_deserialize_sint_4();
+    /* CR avsm: shouldnt this be deserialising a uint instead of sint above? */
+    if (len < 0) caml_failwith("bad deserialize length < 0");
     RE2::Options options;
-    char * pattern = (char *) caml_stat_alloc(sizeof(*pattern) * (len));
+    char * pattern = (char *) caml_stat_alloc(sizeof(*pattern) * ((size_t)len));
     caml_deserialize_block_1(pattern, len);
     pattern[len - 1] = '\0';
     options.Copy(RE2::Quiet);
@@ -161,15 +163,11 @@ extern "C" {
   }
 
   static int new_pos(const char *input, StringPiece &remaining, StringPiece &match) {
-    if (remaining.length() < 0) {
-      return -1;
-    } else {
-      /* casting these size_t's to int is safe because StringPiece's track
-       * their lengths using ints */
-      size_t first_unexamined = remaining.data() - input;
-      size_t first_unmatched = match.data() - input + match.length();
-      return (int) (first_unexamined > first_unmatched ? first_unexamined : first_unmatched);
-    }
+    /* casting these size_t's to int is safe because StringPiece's track
+     * their lengths using ints */
+    long first_unexamined = remaining.data() - input;
+    long first_unmatched = match.data() - input + (long)match.length();
+    return (int) (first_unexamined > first_unmatched ? first_unexamined : first_unmatched);
   }
 
   static void ensure_progress(StringPiece &str, const StringPiece &match) {
@@ -179,7 +177,7 @@ extern "C" {
      * ints.  If the end of the match were more than INT_MAX in front
      * of the start of the input, then input would have overflowed its
      * length field already. */
-    const int incr = (int) (match.data() - str.data()) + match.length();
+    const size_t incr = (size_t)(match.data() - str.data()) + match.length();
     if (incr > 0) {
        str.remove_prefix(incr);
     } else if (str.length() > 0) {
@@ -298,19 +296,18 @@ extern "C" {
     StringPiece *submatches = new StringPiece[n];
     StringPiece *sub = submatches;
 
-    if (str.length() < 0
-        || ! re->Match(str, 0, str.length(), RE2::UNANCHORED, submatches, n)) {
+    if (! re->Match(str, 0, (int)str.length(), RE2::UNANCHORED, submatches, n)) {
       PAIR(v_retval, Val_int(-1), Val_none);
     } else {
       ensure_progress(str, submatches[0]);
-      v_match_array = caml_alloc_tuple(n);
+      v_match_array = caml_alloc_tuple((mlsize_t)n);
       for (int i = 0; i < n; ++i) {
         sub = submatches + i;
         if (sub->data()) {
           PAIR(v_retval, Val_int((int)(sub->data() - input)), Val_int(sub->length()));
           SOME(v_match, v_retval);
         } else v_match = Val_none;
-        Store_field(v_match_array, i, v_match);
+        Store_field(v_match_array, (mlsize_t)i, v_match);
       }
       SOME(v_match, v_match_array);
       PAIR(v_retval, Val_int(new_pos(input, str, submatches[0])), v_match);
@@ -321,7 +318,7 @@ extern "C" {
 
   CAMLprim value mlre2__matches(value v_regex, value v_str) {
     StringPiece str = String_val(v_str);
-    return Val_int(Regex_val(v_regex)->Match(str, 0, str.length(),
+    return Val_int(Regex_val(v_regex)->Match(str, 0, (int)str.length(),
                                              RE2::UNANCHORED, NULL, 0));
   }
 
@@ -341,7 +338,7 @@ extern "C" {
     assert_valid_sub(re, v_sub);
 
     while (str.length() > 0
-        && re->Match(str, 0, str.length(), RE2::UNANCHORED, matches, n)) {
+        && re->Match(str, 0, (int)str.length(), RE2::UNANCHORED, matches, n)) {
       ensure_progress(str, matches[0]);
       /* push_back followed by back-to-front consing gives the correct final order */
       if (sub->data()) {
@@ -379,7 +376,7 @@ extern "C" {
 
     assert_valid_sub(re, v_sub);
 
-    if (! re->Match(str, 0, str.length(), RE2::UNANCHORED, submatches, n)) {
+    if (! re->Match(str, 0, (int)str.length(), RE2::UNANCHORED, submatches, n)) {
       caml_raise_with_string(*caml_named_value("mlre2__Regex_match_failed"),
         re->pattern().c_str());
     }

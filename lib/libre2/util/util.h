@@ -40,7 +40,7 @@ using std::sort;
 using std::swap;
 using std::make_pair;
 
-#if defined(__GNUC__) && !defined(USE_CXX0X)
+#if defined(__GNUC__) && !defined(USE_CXX0X) && !defined(__llvm__)
 
 #include <tr1/unordered_set>
 using std::tr1::unordered_set;
