@@ -100,7 +100,7 @@ let _ = run_test_tt_main ("creation" >::: [
       (try
         let _ = Regex.find_first_exn ~sub:(`Index 2) re "foobarbaz" in
         false
-      with
+       with
       | _ -> true));
   "find-empty-matches" >:: with_re ~pat:"q*" (fun re ->
     assert_str_equal ~expected:"" (Regex.find_first_exn re default_input));

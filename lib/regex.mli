@@ -85,14 +85,13 @@ val pattern : t -> string
     matches of [t] against [input], in left-to-right order.
 
     If [sub] is given, and the requested subpattern did not capture, then no match is
-    returned at that position even if other parts of the regex did match.
-*)
+    returned at that position even if other parts of the regex did match. *)
 val find_all     : ?sub:id_t -> t -> string -> string list Or_error.t
 val find_all_exn : ?sub:id_t -> t -> string -> string list
 
-(** [find_first ?sub pattern input] a convenience function around [find_all] that
-    returns the first match only
-*)
+(** [find_first ?sub pattern input] finds the first match of [pattern] in [input], and
+    returns the subpattern specified by [sub], or an error if the subpattern didn't
+    capture. *)
 val find_first     : ?sub:id_t -> t -> string -> string Or_error.t
 val find_first_exn : ?sub:id_t -> t -> string -> string
 

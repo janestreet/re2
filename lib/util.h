@@ -4,10 +4,8 @@
 /* must be #include'ed inside an extern "C" { } block */
 
 #define Val_none (Val_int(0))
-#define Val_emptyarray (Atom(0))
 
 #define Regex_val(v) (*(RE2 **) Data_custom_val(v))
-#define Strpiece_val(v) (*(StringPiece **) Data_custom_val(v))
 
 #define PAIR(v_dst, v_a, v_b) do {                   \
     v_dst = caml_alloc_small(2, 0);                  \

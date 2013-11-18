@@ -325,12 +325,12 @@ extern "C" {
   CAMLprim value mlre2__find_all(value v_regex, value v_sub, value v_str) {
     CAMLparam2(v_regex, v_str);
     CAMLlocal3(v_retval, v_car, v_cons);
-    CAMLlocalN(error_args, 2);
 
     std::vector<StringPiece> results;
 
     const RE2 * re = Regex_val(v_regex);
-    StringPiece str = StringPiece(String_val(v_str));
+    const char* input = String_val(v_str);
+    StringPiece str = StringPiece(input);
     int n = Int_val(v_sub) + 1;
     StringPiece * matches = new StringPiece[n];
     StringPiece * sub = matches + Int_val(v_sub);
@@ -347,6 +347,7 @@ extern "C" {
     }
 
     if (results.size() <= 0) {
+      delete[] matches;
       caml_raise_with_string(*caml_named_value("mlre2__Regex_match_failed"),
           re->pattern().c_str());
     }
@@ -354,7 +355,7 @@ extern "C" {
     v_retval = Val_emptylist;
     for (std::vector<StringPiece>::reverse_iterator it = results.rbegin(); it != results.rend(); ++it) {
       v_car = caml_alloc_string(it->length());
-      it->copy(String_val(v_car), it->length());
+      memcpy(String_val(v_car), String_val(v_str) + (it->data() - input), it->length());
       v_cons = caml_alloc_small(2, Tag_cons);
       Field(v_cons, 0) = v_car;
       Field(v_cons, 1) = v_retval;
@@ -370,7 +371,8 @@ extern "C" {
     CAMLlocalN(error_args, 2);
 
     const RE2 * re = Regex_val(v_regex);
-    StringPiece str = StringPiece(String_val(v_str));
+    const char* input = String_val(v_str);
+    StringPiece str = StringPiece(input);
     int n = Int_val(v_sub) + 1;
     StringPiece * submatches = new StringPiece[n];
 
@@ -384,6 +386,7 @@ extern "C" {
     StringPiece * sub = submatches + Int_val(v_sub);
 
     if (!sub->data()) {
+      delete[] submatches;
       error_args[0] = caml_copy_string(re->pattern().c_str());
       error_args[1] = v_sub;
       caml_raise_with_args(*caml_named_value("mlre2__Regex_submatch_did_not_capture"),
@@ -391,7 +394,7 @@ extern "C" {
     }
 
     v_retval = caml_alloc_string(sub->length());
-    sub->copy(String_val(v_retval), sub->length());
+    memcpy(String_val(v_retval), String_val(v_str) + (sub->data() - input), sub->length());
     delete[] submatches;
     CAMLreturn(v_retval);
   }
