@@ -20,5 +20,5 @@ stubs.o: stubs.cpp stubs.h util.h enum_x_macro.h
 
 .PHONY: $(LIBRE2)
 $(LIBRE2):
-	make -C $(RE2_HOME) CXXFLAGS='-Wall -O3 -g -pthread -fPIC' obj/libre2.a
+	$(MAKE) -C $(RE2_HOME) CXXFLAGS='-Wall -O3 -g -pthread -fPIC' obj/libre2.a
 
