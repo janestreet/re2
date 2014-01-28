@@ -38,11 +38,3 @@ Library re2
                       bin_prot,
                       sexplib,
                       threads
-
-Document "re2"
-  Title:                OCaml bindings for RE2
-  Type:                 ocamlbuild (0.3)
-  BuildTools+:          ocamldoc
-  XOCamlbuildPath:      lib
-  XOCamlbuildLibraries: re2
-
