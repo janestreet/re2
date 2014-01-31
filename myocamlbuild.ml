@@ -12,7 +12,10 @@ let dispatch = function
     flag ["ocaml"; "link"; "library"; "native"] (S[A"-cclib"; A"-Llib";
                                                    A"-cclib"; A"-lre2_stubs";
                                                    A"-cclib"; A"-lstdc++"]);
-    flag ["ocaml"; "link"; "library"; "byte"]   (S[A"-dllib"; A"dllre2_stubs.so"]);
+    flag ["ocaml"; "link"; "library"; "byte"]   (S[A"-dllib"; A"dllre2_stubs.so";
+                                                   A"-cclib"; A"-Llib";
+                                                   A"-cclib"; A"-lre2_stubs";
+                                                   A"-cclib"; A"-lstdc++"]);
   | _ ->
     ()
 
