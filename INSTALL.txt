@@ -1,9 +1,9 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 8c9f9316d233c72592735c1fbff8963f) *)
+(* DO NOT EDIT (digest: 93694033a9b4038252ad9c680904414d) *)
 This is the INSTALL file for the re2 distribution.
 
 This package uses OASIS to generate its build system. See section OASIS for
-full information. 
+full information.
 
 Dependencies
 ============
