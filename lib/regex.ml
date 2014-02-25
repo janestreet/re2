@@ -111,10 +111,10 @@ let index_of_id_exn t = function
 
 module Match = struct
   type t = {
-    rex      : regex;
+    rex      : regex sexp_opaque;
     input    : string;
     captures : (int * int) option array;
-  }
+  } with sexp_of
 
   let get_pos_exn ~sub t =
     let i = index_of_id_exn t.rex sub in
@@ -331,4 +331,16 @@ TEST_MODULE = struct
     let (<) a b = compare a b < 0 in
     a_star < foo && dot_capture < a_star && dot_capture < foo
   end
+
+  TEST_UNIT =
+    let re = create_exn "^" in
+    match get_matches_exn re "XYZ" with
+    | [ the_match ] ->
+      <:test_eq< int * int >> (0, 0) (Match.get_pos_exn ~sub:(`Index 0) the_match)
+    | other -> failwiths "expected exactly one match" other <:sexp_of< Match.t list >>
+
+  TEST_UNIT =
+    let re = create_exn "^" in
+    <:test_eq< string >> "aXYZ" (replace_exn re "XYZ" ~f:(const "a"))
+
 end

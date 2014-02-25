@@ -158,7 +158,7 @@ end
 
 module Match : sig
   (** A Match.t is the result of applying a regex to an input string *)
-  type t
+  type t with sexp_of
 
   (** If location information has been omitted (e.g., via [~sub]), the error returned is
       [Regex_no_such_subpattern], just as though that subpattern were never defined.

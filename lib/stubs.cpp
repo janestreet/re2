@@ -162,30 +162,27 @@ extern "C" {
     caml_register_custom_operations(&mlre2__custom_regex_ops);
   }
 
-  static int new_pos(const char *input, StringPiece &remaining, StringPiece &match) {
+  static int new_pos(const char *input, StringPiece &remaining, int incr, StringPiece &match) {
     /* casting these size_t's to int is safe because StringPiece's track
      * their lengths using ints */
-    long first_unexamined = remaining.data() - input;
+    long first_unexamined = remaining.data() + incr - input;
     long first_unmatched = match.data() - input + (long)match.length();
     return (int) (first_unexamined > first_unmatched ? first_unexamined : first_unmatched);
   }
 
-  static void ensure_progress(StringPiece &str, const StringPiece &match) {
+  /* this is to ensure we don't return the same zero-length match forever */
+  static size_t ensure_progress(StringPiece &str, const StringPiece &match) {
     static RE2 re(".");
-    /* This assignment implicitly casts a pointer to (int).  The cast
-     * is safe here because StringPiece objects track their lengths in
-     * ints.  If the end of the match were more than INT_MAX in front
-     * of the start of the input, then input would have overflowed its
-     * length field already. */
-    const size_t incr = (size_t)(match.data() - str.data()) + match.length();
-    if (incr > 0) {
-       str.remove_prefix(incr);
+    if (match.length() > 0) {
+      return match.length();
     } else if (str.length() > 0) {
+      StringPiece str_copy = str;
       /* Drops one character from the front of the StringPiece.
          Implemented using a regex call because that's the easiest way
          to handle multibyte Unicode characters. */
-      RE2::Consume(&str, re);
-    } else str.remove_prefix(1); /* we halt on negative length strings */
+      RE2::Consume(&str_copy, re);
+      return (size_t) (str_copy.data() - str.data());
+    } else return 1; /* we halt on negative length strings, so this value is arbitrary */
   }
 
   static void assert_valid_sub(const RE2 *re, value v_sub) {
@@ -288,18 +285,20 @@ extern "C" {
 
     const RE2 * re = Regex_val(v_regex);
     const char * input = String_val(v_input);
-    StringPiece str = StringPiece(input + Int_val(v_pos));
+    size_t startpos = Int_val(v_pos);
+    StringPiece str = StringPiece(input);
     int max_submatch = Int_val(v_max_submatch) < 0
       ? re->NumberOfCapturingGroups() + 1 /* +1 for whole match ("subpattern zero") */
       : Int_val(v_max_submatch);
     int n = 1 + (max_submatch > 0 ? max_submatch : 0);
     StringPiece *submatches = new StringPiece[n];
-    StringPiece *sub = submatches;
+    StringPiece *sub = submatches; /* extra pointer for iterating over [submatches] */
 
-    if (! re->Match(str, 0, (int)str.length(), RE2::UNANCHORED, submatches, n)) {
+    if (str.length() < startpos
+        || ! re->Match(str, (int)startpos, (int)str.length(), RE2::UNANCHORED, submatches, n)) {
       PAIR(v_retval, Val_int(-1), Val_none);
     } else {
-      ensure_progress(str, submatches[0]);
+      startpos += ensure_progress(str, submatches[0]);
       v_match_array = caml_alloc_tuple((mlsize_t)n);
       for (int i = 0; i < n; ++i) {
         sub = submatches + i;
@@ -310,7 +309,7 @@ extern "C" {
         Store_field(v_match_array, (mlsize_t)i, v_match);
       }
       SOME(v_match, v_match_array);
-      PAIR(v_retval, Val_int(new_pos(input, str, submatches[0])), v_match);
+      PAIR(v_retval, Val_int(new_pos(input, str, (int)startpos, submatches[0])), v_match);
     }
     delete[] submatches;
     CAMLreturn(v_retval);
@@ -332,14 +331,15 @@ extern "C" {
     const char* input = String_val(v_str);
     StringPiece str = StringPiece(input);
     int n = Int_val(v_sub) + 1;
+    size_t startpos = 0;
     StringPiece * matches = new StringPiece[n];
     StringPiece * sub = matches + Int_val(v_sub);
 
     assert_valid_sub(re, v_sub);
 
-    while (str.length() > 0
-        && re->Match(str, 0, (int)str.length(), RE2::UNANCHORED, matches, n)) {
-      ensure_progress(str, matches[0]);
+    while (str.length() > startpos
+        && re->Match(str, (int)startpos, (int)str.length(), RE2::UNANCHORED, matches, n)) {
+      startpos += ensure_progress(str, matches[0]);
       /* push_back followed by back-to-front consing gives the correct final order */
       if (sub->data()) {
         results.push_back(*sub);

@@ -197,7 +197,8 @@ let _ = run_test_tt_main ("creation" >::: [
     let matches = Regex.get_matches_exn re default_input in
     let n_expected, n_got = (String.length default_input + 1, List.length matches) in
     assert_equal n_expected n_got
-      ~msg:(Printf.sprintf "expected %d got %d matches" n_expected n_got) ;
+      ~msg:(Printf.sprintf !"expected %d got %d matches: %{sexp:Regex.Match.t list}"
+              n_expected n_got matches) ;
     List.iteri matches ~f:(fun i m ->
       let pos, len = Regex.Match.get_pos_exn ~sub:(`Index 0) m in
       assert_equal i pos;
@@ -218,7 +219,7 @@ let _ = run_test_tt_main ("creation" >::: [
   "split-with-matches" >:: with_re (fun re ->
     match Regex.split re default_input ~include_matches:true with
     | [ ""; "foobar"; "A"; "foobaz"; "B"; "foobar"; ""; "foobaz"; "C" ] -> ()
-    | l -> assert_failure (String.concat ~sep:"\t" l));
+    | l -> assert_failure (Sexp.to_string_hum (<:sexp_of< string list >> l)));
 
   (** replacements *)
   "replace" >:: with_re (fun re ->
