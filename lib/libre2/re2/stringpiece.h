@@ -29,7 +29,7 @@ namespace re2 {
 class StringPiece {
  private:
   const char*   ptr_;
-  size_t        length_;
+  int           length_;
 
  public:
   // We provide non-explicit singleton constructors so users can pass
@@ -37,42 +37,42 @@ class StringPiece {
   // expected.
   StringPiece() : ptr_(NULL), length_(0) { }
   StringPiece(const char* str)
-    : ptr_(str), length_((str == NULL) ? 0 : static_cast<size_t>(strlen(str))) { }
+    : ptr_(str), length_((str == NULL) ? 0 : static_cast<int>(strlen(str))) { }
   StringPiece(const std::string& str)
-    : ptr_(str.data()), length_(static_cast<size_t>(str.size())) { }
-  StringPiece(const char* offset, size_t len) : ptr_(offset), length_(len) { }
+    : ptr_(str.data()), length_(static_cast<int>(str.size())) { }
+  StringPiece(const char* offset, int len) : ptr_(offset), length_(len) { }
 
   // data() may return a pointer to a buffer with embedded NULs, and the
   // returned buffer may or may not be null terminated.  Therefore it is
   // typically a mistake to pass data() to a routine that expects a NUL
   // terminated string.
   const char* data() const { return ptr_; }
-  size_t size() const { return length_; }
-  size_t length() const { return length_; }
+  int size() const { return length_; }
+  int length() const { return length_; }
   bool empty() const { return length_ == 0; }
 
   void clear() { ptr_ = NULL; length_ = 0; }
-  void set(const char* data, size_t len) { ptr_ = data; length_ = len; }
+  void set(const char* data, int len) { ptr_ = data; length_ = len; }
   void set(const char* str) {
     ptr_ = str;
     if (str != NULL)
-      length_ = static_cast<size_t>(strlen(str));
+      length_ = static_cast<int>(strlen(str));
     else
       length_ = 0;
   }
-  void set(const void* data, size_t len) {
+  void set(const void* data, int len) {
     ptr_ = reinterpret_cast<const char*>(data);
     length_ = len;
   }
 
   char operator[](int i) const { return ptr_[i]; }
 
-  void remove_prefix(size_t n) {
+  void remove_prefix(int n) {
     ptr_ += n;
     length_ -= n;
   }
 
-  void remove_suffix(size_t n) {
+  void remove_suffix(int n) {
     length_ -= n;
   }
 
@@ -133,8 +133,8 @@ class StringPiece {
     return const_reverse_iterator(ptr_);
   }
   // STLS says return size_type, but Google says return int
-  size_t max_size() const { return length_; }
-  size_t capacity() const { return length_; }
+  int max_size() const { return length_; }
+  int capacity() const { return length_; }
 
   int copy(char* buf, size_type n, size_type pos = 0) const;
 
