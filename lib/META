@@ -1,6 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: ad5315cb0b26c57240aeff705edc7538)
-version = "111.03.00"
+# DO NOT EDIT (digest: f970c05a7cb6dd47be7eed8daa5e51dc)
+version = "111.03.01"
 description = "OCaml bindings for RE2"
 requires = "core pa_ounit pa_test bin_prot sexplib threads"
 archive(byte) = "re2.cma"
