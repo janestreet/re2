@@ -115,7 +115,7 @@ extern "C" {
       caml_failwith("cannot serialize regexes with patterns longer than INT_MAX");
     }
     caml_serialize_int_4((signed int) len);
-    caml_serialize_block_1((char *) re->pattern().c_str(), (intnat) len);
+    caml_serialize_block_1((char *) re->pattern().c_str(), len);
     caml_serialize_int_4(re->options().max_mem());
     caml_serialize_int_2(bitfield_of_options(re->options()));
 #ifdef DEBUG
@@ -128,10 +128,8 @@ extern "C" {
 
   unsigned long mlre2__custom_regex_deserialize(void * dst) {
     int len = caml_deserialize_sint_4();
-    /* CR avsm: shouldnt this be deserialising a uint instead of sint above? */
-    if (len < 0) caml_failwith("bad deserialize length < 0");
     RE2::Options options;
-    char * pattern = (char *) caml_stat_alloc(sizeof(*pattern) * ((size_t)len));
+    char * pattern = (char *) caml_stat_alloc(sizeof(*pattern) * (len));
     caml_deserialize_block_1(pattern, len);
     pattern[len - 1] = '\0';
     options.Copy(RE2::Quiet);
@@ -163,15 +161,19 @@ extern "C" {
   }
 
   static int new_pos(const char *input, StringPiece &remaining, int incr, StringPiece &match) {
-    /* casting these size_t's to int is safe because StringPiece's track
-     * their lengths using ints */
-    long first_unexamined = remaining.data() + incr - input;
-    long first_unmatched = match.data() - input + (long)match.length();
-    return (int) (first_unexamined > first_unmatched ? first_unexamined : first_unmatched);
+    if (remaining.length() < 0) {
+      return -1;
+    } else {
+      /* casting these size_t's to int is safe because StringPiece's track
+       * their lengths using ints */
+      size_t first_unexamined = remaining.data() + incr - input;
+      size_t first_unmatched = match.data() - input + match.length();
+      return (int) (first_unexamined > first_unmatched ? first_unexamined : first_unmatched);
+    }
   }
 
   /* this is to ensure we don't return the same zero-length match forever */
-  static size_t ensure_progress(StringPiece &str, const StringPiece &match) {
+  static int ensure_progress(StringPiece &str, const StringPiece &match) {
     static RE2 re(".");
     if (match.length() > 0) {
       return match.length();
@@ -181,7 +183,7 @@ extern "C" {
          Implemented using a regex call because that's the easiest way
          to handle multibyte Unicode characters. */
       RE2::Consume(&str_copy, re);
-      return (size_t) (str_copy.data() - str.data());
+      return (int) (str_copy.data() - str.data());
     } else return 1; /* we halt on negative length strings, so this value is arbitrary */
   }
 
@@ -285,7 +287,7 @@ extern "C" {
 
     const RE2 * re = Regex_val(v_regex);
     const char * input = String_val(v_input);
-    size_t startpos = Int_val(v_pos);
+    int startpos = Int_val(v_pos);
     StringPiece str = StringPiece(input);
     int max_submatch = Int_val(v_max_submatch) < 0
       ? re->NumberOfCapturingGroups() + 1 /* +1 for whole match ("subpattern zero") */
@@ -295,21 +297,21 @@ extern "C" {
     StringPiece *sub = submatches; /* extra pointer for iterating over [submatches] */
 
     if (str.length() < startpos
-        || ! re->Match(str, (int)startpos, (int)str.length(), RE2::UNANCHORED, submatches, n)) {
+        || ! re->Match(str, startpos, str.length(), RE2::UNANCHORED, submatches, n)) {
       PAIR(v_retval, Val_int(-1), Val_none);
     } else {
       startpos += ensure_progress(str, submatches[0]);
-      v_match_array = caml_alloc_tuple((mlsize_t)n);
+      v_match_array = caml_alloc_tuple(n);
       for (int i = 0; i < n; ++i) {
         sub = submatches + i;
         if (sub->data()) {
           PAIR(v_retval, Val_int((int)(sub->data() - input)), Val_int(sub->length()));
           SOME(v_match, v_retval);
         } else v_match = Val_none;
-        Store_field(v_match_array, (mlsize_t)i, v_match);
+        Store_field(v_match_array, i, v_match);
       }
       SOME(v_match, v_match_array);
-      PAIR(v_retval, Val_int(new_pos(input, str, (int)startpos, submatches[0])), v_match);
+      PAIR(v_retval, Val_int(new_pos(input, str, startpos, submatches[0])), v_match);
     }
     delete[] submatches;
     CAMLreturn(v_retval);
@@ -317,7 +319,7 @@ extern "C" {
 
   CAMLprim value mlre2__matches(value v_regex, value v_str) {
     StringPiece str = String_val(v_str);
-    return Val_int(Regex_val(v_regex)->Match(str, 0, (int)str.length(),
+    return Val_int(Regex_val(v_regex)->Match(str, 0, str.length(),
                                              RE2::UNANCHORED, NULL, 0));
   }
 
@@ -331,14 +333,14 @@ extern "C" {
     const char* input = String_val(v_str);
     StringPiece str = StringPiece(input);
     int n = Int_val(v_sub) + 1;
-    size_t startpos = 0;
+    int startpos = 0;
     StringPiece * matches = new StringPiece[n];
     StringPiece * sub = matches + Int_val(v_sub);
 
     assert_valid_sub(re, v_sub);
 
     while (str.length() > startpos
-        && re->Match(str, (int)startpos, (int)str.length(), RE2::UNANCHORED, matches, n)) {
+        && re->Match(str, startpos, str.length(), RE2::UNANCHORED, matches, n)) {
       startpos += ensure_progress(str, matches[0]);
       /* push_back followed by back-to-front consing gives the correct final order */
       if (sub->data()) {
@@ -378,7 +380,8 @@ extern "C" {
 
     assert_valid_sub(re, v_sub);
 
-    if (! re->Match(str, 0, (int)str.length(), RE2::UNANCHORED, submatches, n)) {
+    if (! re->Match(str, 0, str.length(), RE2::UNANCHORED, submatches, n)) {
+      delete[] submatches;
       caml_raise_with_string(*caml_named_value("mlre2__Regex_match_failed"),
         re->pattern().c_str());
     }
