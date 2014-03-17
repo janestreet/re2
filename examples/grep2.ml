@@ -1,5 +1,5 @@
 open StdLabels
-module Regex = Re2.Regex
+module Re2 = Re2.Std.Re2
 
 let underline_on = Format.sprintf "%c[4m" (Char.chr 27)
 let underline_off = Format.sprintf "%c[24m" (Char.chr 27)
@@ -28,9 +28,9 @@ let () =
 (* this is the only interesting (i.e., Re2-using) part *)
 let () =
   if !underline then
-    let re = Regex.create_exn "\\\\[0-9]" in
+    let re = Re2.create_exn "\\\\[0-9]" in
     let template = Format.sprintf "%c[4m\\0%c[24m" (Char.chr 27) (Char.chr 27) in
-    match  (Regex.rewrite re ~template !rewrite) with
+    match  (Re2.rewrite re ~template !rewrite) with
     | Core.Std.Result.Ok s -> rewrite := s
     | Core.Std.Result.Error _ -> ()
 ;;
@@ -40,7 +40,7 @@ let re =
   then raise (Failure (Format.sprintf "invalid pattern /%s/" !pattern))
   else begin
     try
-      Regex.create_exn !pattern
+      Re2.create_exn !pattern
     with
     | _ ->
       raise (Failure (Format.sprintf "invalid pattern /%s/" !pattern))
@@ -50,14 +50,14 @@ let re =
 let sub =
   if !str_sub = "" then `Index 0
   else let id = try `Index (int_of_string !str_sub) with _ -> `Name !str_sub in
-  `Index (Regex.index_of_id_exn re id)
+  `Index (Re2.index_of_id_exn re id)
 ;;
 
 let grep str =
   try
-    if not (Regex.matches re str) then None else
-      let str = if not !only_matching then str else Regex.find_first_exn ~sub re str in
-      Some (Regex.rewrite re ~template:(!rewrite) str)
+    if not (Re2.matches re str) then None else
+      let str = if not !only_matching then str else Re2.find_first_exn ~sub re str in
+      Some (Re2.rewrite re ~template:(!rewrite) str)
   with
   | err -> raise err
 ;;
