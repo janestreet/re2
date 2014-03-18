@@ -1,4 +1,34 @@
 # OASIS_START
+# DO NOT EDIT (digest: ea80a1c79d0dab74af282a0c9fca6b33)
+# Ignore VCS directories, you can use the same kind of rule outside
+# OASIS_START/STOP if you want to exclude directories that contains
+# useless stuff for the build process
+<**/.svn>: -traverse
+<**/.svn>: not_hygienic
+".bzr": -traverse
+".bzr": not_hygienic
+".hg": -traverse
+".hg": not_hygienic
+".git": -traverse
+".git": not_hygienic
+"_darcs": -traverse
+"_darcs": not_hygienic
+# Library re2
+"lib/re2.cmxs": use_re2
+"lib/re2_internal.cmx": for-pack(Re2)
+"lib/re2_internal_intf.cmx": for-pack(Re2)
+"lib/regex.cmx": for-pack(Re2)
+"lib/std.cmx": for-pack(Re2)
+<lib/*.ml{,i}>: package(bin_prot)
+<lib/*.ml{,i}>: package(bin_prot.syntax)
+<lib/*.ml{,i}>: package(comparelib.syntax)
+<lib/*.ml{,i}>: package(core)
+<lib/*.ml{,i}>: package(pa_ounit)
+<lib/*.ml{,i}>: package(pa_ounit.syntax)
+<lib/*.ml{,i}>: package(pa_test.syntax)
+<lib/*.ml{,i}>: package(sexplib)
+<lib/*.ml{,i}>: package(sexplib.syntax)
+<lib/*.ml{,i}>: package(threads)
 # OASIS_STOP
 <lib{,_test}/*.ml{,i}> : syntax_camlp4o
 "lib/options.ml": for-pack(Re2)
