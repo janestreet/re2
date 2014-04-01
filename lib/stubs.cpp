@@ -39,7 +39,7 @@ int compare_options(const RE2::RE2::Options& A, const RE2::RE2::Options& B) {
   uint16_t b = bitfield_of_options(B);
 
   if ((retval = compare<uint16_t>(a, b))) return retval;
-  else return compare<int>(A.max_mem(), B.max_mem());
+  else return compare<int64_t>(A.max_mem(), B.max_mem());
 }
 
 using namespace re2;
@@ -100,11 +100,11 @@ extern "C" {
   /* The serialization format:
      (4 bytes)   length of pattern, int
      (n bytes)   pattern, string
-     (4 bytes)   max_mem, int
+     (8 bytes)   max_mem, int64
      (2 bytes)   all other options, bit array
      where all other options has the format:
-     (10 bits) bool_array_of_options, one bit per element
-     (6  bits) zero
+     (13 bits) bool_array_of_options, one bit per element
+     (3  bits) zero
   */
 
   void mlre2__custom_regex_serialize(value v, unsigned long * wsize_32,
@@ -116,7 +116,7 @@ extern "C" {
     }
     caml_serialize_int_4((signed int) len);
     caml_serialize_block_1((char *) re->pattern().c_str(), len);
-    caml_serialize_int_4(re->options().max_mem());
+    caml_serialize_int_8(re->options().max_mem());
     caml_serialize_int_2(bitfield_of_options(re->options()));
 #ifdef DEBUG
     std::cerr << "serialized regex /" << Regex_val(v)->pattern() << "/ (length "
@@ -133,7 +133,7 @@ extern "C" {
     caml_deserialize_block_1(pattern, len);
     pattern[len - 1] = '\0';
     options.Copy(RE2::Quiet);
-    options.set_max_mem(caml_deserialize_sint_4());
+    options.set_max_mem(caml_deserialize_sint_8());
     options_of_bitfield((uint16_t) caml_deserialize_uint_2(), options);
 #ifdef DEBUG
     std::cerr << "deserialized regex /" << pattern << "/" << std::endl;
@@ -144,7 +144,7 @@ extern "C" {
   }
 
   struct custom_operations mlre2__custom_regex_ops = {
-    (char *)"com.janestreet.re2-ocaml.regex-v19Aug2011",
+    (char *)"com.janestreet.re2-ocaml.regex-v20Mar2014",
     mlre2__custom_regex_finalize,
     mlre2__custom_regex_compare,
     mlre2__custom_regex_hash,

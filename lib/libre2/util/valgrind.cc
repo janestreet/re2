@@ -7,18 +7,18 @@
 
 namespace re2 {
 
-static bool checkValgrind() {
-#ifdef RUNNING_ON_VALGRIND
-	return RUNNING_ON_VALGRIND;
-#else
-	return false;
+#ifndef __has_feature
+#define __has_feature(x) 0
 #endif
-}
-
-static const int valgrind = checkValgrind();
 
 int RunningOnValgrind() {
-  return valgrind;
+#if __has_feature(memory_sanitizer)
+	return true;
+#elif defined(RUNNING_ON_VALGRIND)
+	return RUNNING_ON_VALGRIND;
+#else
+	return 0;
+#endif
 }
 
 }  // namespace re2

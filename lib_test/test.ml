@@ -46,6 +46,15 @@ let _ = run_test_tt_main ("creation" >::: [
         false
       with
       | _ -> true));
+  "dot-nl-default" >:: with_re ~pat:"abc." (fun re ->
+    assert_bool "" (Re2.matches re "abcd");
+    assert_bool "" (not (Re2.matches re "abc\n"));
+  );
+  "dot-nl-explicit" >:: (fun () ->
+    let re = Re2.create_exn ~options:[`Dot_nl true] "abc." in
+    assert_bool "" (Re2.matches re "abcd");
+    assert_bool "" (Re2.matches re "abc\n");
+  );
   "case-sensitive-default" >:: with_re ~pat:"Foo" (fun re ->
       assert_bool "" (Re2.matches re "Foo");
       assert_bool "" (not (Re2.matches re "foo")));

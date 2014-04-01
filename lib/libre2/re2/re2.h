@@ -179,19 +179,38 @@
 //         RE2::Octal(&a), RE2::Hex(&b), RE2::CRadix(&c), RE2::CRadix(&d));
 // will leave 64 in a, b, c, and d.
 
-
 #include <stdint.h>
 #include <map>
 #include <string>
 #include "re2/stringpiece.h"
 #include "re2/variadic_function.h"
 
+#ifndef RE2_HAVE_LONGLONG
+#define RE2_HAVE_LONGLONG 1
+#endif
+
 namespace re2 {
+
 using std::string;
 using std::map;
 class Mutex;
 class Prog;
 class Regexp;
+
+// The following enum should be used only as a constructor argument to indicate
+// that the variable has static storage class, and that the constructor should
+// do nothing to its state.  It indicates to the reader that it is legal to
+// declare a static instance of the class, provided the constructor is given
+// the LINKER_INITIALIZED argument.  Normally, it is unsafe to declare a
+// static variable that has a constructor or a destructor because invocation
+// order is undefined.  However, IF the type can be initialized by filling with
+// zeroes (which the loader does for static variables), AND the type's
+// destructor does nothing to the storage, then a constructor for static
+// initialization can be declared as
+//       explicit MyClass(LinkerInitialized x) {}
+// and invoked as
+//       static MyClass my_variable_name(LINKER_INITIALIZED);
+enum LinkerInitialized { LINKER_INITIALIZED };
 
 // Interface for regular expression matching.  Also corresponds to a
 // pre-compiled regular expression.  An "RE2" object is safe for
@@ -224,17 +243,20 @@ class RE2 {
     ErrorBadPerlOp,          // bad perl operator
     ErrorBadUTF8,            // invalid UTF-8 in regexp
     ErrorBadNamedCapture,    // bad named capture group
-    ErrorPatternTooLarge,    // pattern too large (compile failed)
+    ErrorPatternTooLarge     // pattern too large (compile failed)
   };
 
   // Predefined common options.
   // If you need more complicated things, instantiate
-  // an Option class, change the settings, and pass it to the
-  // RE2 constructor.
-  static const Options DefaultOptions;
-  static const Options Latin1; // treat input as Latin-1 (default UTF-8)
-  static const Options POSIX;  // POSIX syntax, leftmost-longest match
-  static const Options Quiet;  // do not log about regexp parse errors
+  // an Option class, possibly passing one of these to
+  // the Option constructor, change the settings, and pass that
+  // Option class to the RE2 constructor.
+  enum CannedOptions {
+    DefaultOptions = 0,
+    Latin1, // treat input as Latin-1 (default UTF-8)
+    POSIX, // POSIX syntax, leftmost-longest match
+    Quiet // do not log about regexp parse errors
+  };
 
   // Need to have the const char* and const string& forms for implicit
   // conversions when passing string literals to FullMatch and PartialMatch.
@@ -410,7 +432,7 @@ class RE2 {
   enum Anchor {
     UNANCHORED,         // No anchoring
     ANCHOR_START,       // Anchor at start only
-    ANCHOR_BOTH,        // Anchor at start and end
+    ANCHOR_BOTH         // Anchor at start and end
   };
 
   // Return the number of capturing subpatterns, or -1 if the
@@ -467,6 +489,20 @@ class RE2 {
   // fail because of a bad rewrite string.
   bool CheckRewriteString(const StringPiece& rewrite, string* error) const;
 
+  // Returns the maximum submatch needed for the rewrite to be done by
+  // Replace(). E.g. if rewrite == "foo \\2,\\1", returns 2.
+  static int MaxSubmatch(const StringPiece& rewrite);
+
+  // Append the "rewrite" string, with backslash subsitutions from "vec",
+  // to string "out".
+  // Returns true on success.  This method can fail because of a malformed
+  // rewrite string.  CheckRewriteString guarantees that the rewrite will
+  // be sucessful.
+  bool Rewrite(string *out,
+               const StringPiece &rewrite,
+               const StringPiece* vec,
+               int veclen) const;
+
   // Constructor options
   class Options {
    public:
@@ -479,6 +515,8 @@ class RE2 {
     //   max_mem          (see below)  approx. max memory footprint of RE2
     //   literal          (false) interpret string as literal, not regexp
     //   never_nl         (false) never match \n, even if it is in regexp
+    //   dot_nl           (false) dot matches everything including new line
+    //   never_capture    (false) parse all parens as non-capturing
     //   case_sensitive   (true)  match is case-sensitive (regexp can override
     //                              with (?i) unless in posix_syntax mode)
     //
@@ -533,11 +571,15 @@ class RE2 {
       max_mem_(kDefaultMaxMem),
       literal_(false),
       never_nl_(false),
+      dot_nl_(false),
+      never_capture_(false),
       case_sensitive_(true),
       perl_classes_(false),
       word_boundary_(false),
       one_line_(false) {
     }
+
+    /*implicit*/ Options(CannedOptions);
 
     Encoding encoding() const { return encoding_; }
     void set_encoding(Encoding encoding) { encoding_ = encoding; }
@@ -562,14 +604,20 @@ class RE2 {
     bool log_errors() const { return log_errors_; }
     void set_log_errors(bool b) { log_errors_ = b; }
 
-    int max_mem() const { return max_mem_; }
-    void set_max_mem(int m) { max_mem_ = m; }
+    int64_t max_mem() const { return max_mem_; }
+    void set_max_mem(int64_t m) { max_mem_ = m; }
 
     bool literal() const { return literal_; }
     void set_literal(bool b) { literal_ = b; }
 
     bool never_nl() const { return never_nl_; }
     void set_never_nl(bool b) { never_nl_ = b; }
+
+    bool dot_nl() const { return dot_nl_; }
+    void set_dot_nl(bool b) { dot_nl_ = b; }
+
+    bool never_capture() const { return never_capture_; }
+    void set_never_capture(bool b) { never_capture_ = b; }
 
     bool case_sensitive() const { return case_sensitive_; }
     void set_case_sensitive(bool b) { case_sensitive_ = b; }
@@ -591,6 +639,8 @@ class RE2 {
       max_mem_ = src.max_mem_;
       literal_ = src.literal_;
       never_nl_ = src.never_nl_;
+      dot_nl_ = src.dot_nl_;
+      never_capture_ = src.never_capture_;
       case_sensitive_ = src.case_sensitive_;
       perl_classes_ = src.perl_classes_;
       word_boundary_ = src.word_boundary_;
@@ -600,39 +650,15 @@ class RE2 {
     int ParseFlags() const;
 
    private:
-    // Private constructor for defining constants like RE2::Latin1.
-    friend class RE2;
-    Options(Encoding encoding,
-            bool posix_syntax,
-            bool longest_match,
-            bool log_errors) :
-      encoding_(encoding),
-      posix_syntax_(posix_syntax),
-      longest_match_(longest_match),
-      log_errors_(log_errors),
-      max_mem_(kDefaultMaxMem),
-      literal_(false),
-      never_nl_(false),
-      case_sensitive_(true),
-      perl_classes_(false),
-      word_boundary_(false),
-      one_line_(false) {
-    }
-
     Encoding encoding_;
     bool posix_syntax_;
     bool longest_match_;
     bool log_errors_;
-    /* jkilburg
-     * Replace the following:
-     * int64_t max_mem_;
-     * 
-     * Yuri pointed out that an int64 can't be passed in due to
-     * the definition of set_max_mem so this change shouldn't hurt.
-     */
-    int max_mem_;
+    int64_t max_mem_;
     bool literal_;
     bool never_nl_;
+    bool dot_nl_;
+    bool never_capture_;
     bool case_sensitive_;
     bool perl_classes_;
     bool word_boundary_;
@@ -653,8 +679,10 @@ class RE2 {
   static inline Arg CRadix(unsigned int* x);
   static inline Arg CRadix(long* x);
   static inline Arg CRadix(unsigned long* x);
+  #ifdef RE2_HAVE_LONGLONG
   static inline Arg CRadix(long long* x);
   static inline Arg CRadix(unsigned long long* x);
+  #endif
 
   static inline Arg Hex(short* x);
   static inline Arg Hex(unsigned short* x);
@@ -662,8 +690,10 @@ class RE2 {
   static inline Arg Hex(unsigned int* x);
   static inline Arg Hex(long* x);
   static inline Arg Hex(unsigned long* x);
+  #ifdef RE2_HAVE_LONGLONG
   static inline Arg Hex(long long* x);
   static inline Arg Hex(unsigned long long* x);
+  #endif
 
   static inline Arg Octal(short* x);
   static inline Arg Octal(unsigned short* x);
@@ -671,16 +701,13 @@ class RE2 {
   static inline Arg Octal(unsigned int* x);
   static inline Arg Octal(long* x);
   static inline Arg Octal(unsigned long* x);
+  #ifdef RE2_HAVE_LONGLONG
   static inline Arg Octal(long long* x);
   static inline Arg Octal(unsigned long long* x);
+  #endif
 
  private:
   void Init(const StringPiece& pattern, const Options& options);
-
-  bool Rewrite(string *out,
-               const StringPiece &rewrite,
-               const StringPiece* vec,
-               int veclen) const;
 
   bool DoMatch(const StringPiece& text,
                    Anchor anchor,
@@ -757,8 +784,10 @@ class RE2::Arg {
   MAKE_PARSER(unsigned int,       parse_uint);
   MAKE_PARSER(long,               parse_long);
   MAKE_PARSER(unsigned long,      parse_ulong);
+  #ifdef RE2_HAVE_LONGLONG
   MAKE_PARSER(long long,          parse_longlong);
   MAKE_PARSER(unsigned long long, parse_ulonglong);
+  #endif
   MAKE_PARSER(float,              parse_float);
   MAKE_PARSER(double,             parse_double);
   MAKE_PARSER(string,             parse_string);
@@ -804,8 +833,10 @@ class RE2::Arg {
   DECLARE_INTEGER_PARSER(uint);
   DECLARE_INTEGER_PARSER(long);
   DECLARE_INTEGER_PARSER(ulong);
+  #ifdef RE2_HAVE_LONGLONG
   DECLARE_INTEGER_PARSER(longlong);
   DECLARE_INTEGER_PARSER(ulonglong);
+  #endif
 
 #undef DECLARE_INTEGER_PARSER
 };
@@ -826,14 +857,16 @@ inline bool RE2::Arg::Parse(const char* str, int n) const {
   inline RE2::Arg RE2::CRadix(type* ptr) { \
     return RE2::Arg(ptr, RE2::Arg::parse_ ## name ## _cradix); }
 
-MAKE_INTEGER_PARSER(short,              short);
-MAKE_INTEGER_PARSER(unsigned short,     ushort);
-MAKE_INTEGER_PARSER(int,                int);
-MAKE_INTEGER_PARSER(unsigned int,       uint);
-MAKE_INTEGER_PARSER(long,               long);
-MAKE_INTEGER_PARSER(unsigned long,      ulong);
-MAKE_INTEGER_PARSER(long long,          longlong);
-MAKE_INTEGER_PARSER(unsigned long long, ulonglong);
+MAKE_INTEGER_PARSER(short,              short)
+MAKE_INTEGER_PARSER(unsigned short,     ushort)
+MAKE_INTEGER_PARSER(int,                int)
+MAKE_INTEGER_PARSER(unsigned int,       uint)
+MAKE_INTEGER_PARSER(long,               long)
+MAKE_INTEGER_PARSER(unsigned long,      ulong)
+#ifdef RE2_HAVE_LONGLONG
+MAKE_INTEGER_PARSER(long long,          longlong)
+MAKE_INTEGER_PARSER(unsigned long long, ulonglong)
+#endif
 
 #undef MAKE_INTEGER_PARSER
 

@@ -14,6 +14,7 @@
 #include <stdarg.h>
 #include <sys/time.h>
 #include <time.h>
+#include <ctype.h>	// For isdigit, isalpha.
 
 // C++
 #include <vector>
@@ -22,7 +23,7 @@
 #include <iosfwd>
 #include <map>
 #include <stack>
-#include <iostream>
+#include <ostream>
 #include <utility>
 #include <set>
 
@@ -40,7 +41,7 @@ using std::sort;
 using std::swap;
 using std::make_pair;
 
-#if defined(__GNUC__) && !defined(USE_CXX0X) && !defined(_LIBCPP_VERSION)
+#if defined(__GNUC__) && !defined(USE_CXX0X) && !defined(_LIBCPP_ABI_VERSION) && !defined(OS_ANDROID)
 
 #include <tr1/unordered_set>
 using std::tr1::unordered_set;
@@ -48,7 +49,11 @@ using std::tr1::unordered_set;
 #else
 
 #include <unordered_set>
+#if defined(WIN32) || defined(OS_ANDROID)
+using std::tr1::unordered_set;
+#else
 using std::unordered_set;
+#endif
 
 #endif
 
@@ -79,16 +84,6 @@ template<bool> struct CompileAssert {};
   void operator=(const TypeName&)
 
 #define arraysize(array) (sizeof(array)/sizeof((array)[0]))
-
-// Fake lock annotations.  For real ones, see
-// http://code.google.com/p/data-race-test/
-#define ANNOTATE_PUBLISH_MEMORY_RANGE(a, b)
-#define ANNOTATE_IGNORE_WRITES_BEGIN()
-#define ANNOTATE_IGNORE_WRITES_END()
-#define ANNOTATE_BENIGN_RACE(a, b)
-#define NO_THREAD_SAFETY_ANALYSIS
-#define ANNOTATE_HAPPENS_BEFORE(x)
-#define ANNOTATE_HAPPENS_AFTER(x)
 
 class StringPiece;
 

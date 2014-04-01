@@ -10,6 +10,8 @@
 #ifndef RE2_UTIL_MUTEX_H_
 #define RE2_UTIL_MUTEX_H_
 
+#include <stdlib.h>
+
 namespace re2 {
 
 #define HAVE_PTHREAD 1
@@ -72,7 +74,7 @@ class Mutex {
   MutexType mutex_;
 
   // Catch the error of writing Mutex when intending MutexLock.
-  Mutex(Mutex *ignored) {}
+  Mutex(Mutex *ignored);
   // Disallow "evil" constructors
   Mutex(const Mutex&);
   void operator=(const Mutex&);
@@ -102,7 +104,6 @@ void Mutex::ReaderUnlock() { assert(mutex_-- > 0); }
 
 #elif defined(HAVE_PTHREAD) && defined(HAVE_RWLOCK)
 
-#include <stdlib.h>      // for abort()
 #define SAFE_PTHREAD(fncall)  do { if ((fncall) != 0) abort(); } while (0)
 
 Mutex::Mutex()             { SAFE_PTHREAD(pthread_rwlock_init(&mutex_, NULL)); }
@@ -117,7 +118,6 @@ void Mutex::ReaderUnlock() { SAFE_PTHREAD(pthread_rwlock_unlock(&mutex_)); }
 
 #elif defined(HAVE_PTHREAD)
 
-#include <stdlib.h>      // for abort()
 #define SAFE_PTHREAD(fncall)  do { if ((fncall) != 0) abort(); } while (0)
 
 Mutex::Mutex()             { SAFE_PTHREAD(pthread_mutex_init(&mutex_, NULL)); }
@@ -184,6 +184,27 @@ class WriterMutexLock {
 #define MutexLock(x) COMPILE_ASSERT(0, mutex_lock_decl_missing_var_name)
 #define ReaderMutexLock(x) COMPILE_ASSERT(0, rmutex_lock_decl_missing_var_name)
 #define WriterMutexLock(x) COMPILE_ASSERT(0, wmutex_lock_decl_missing_var_name)
+
+// Provide safe way to declare and use global, linker-initialized mutex. Sigh.
+#ifdef HAVE_PTHREAD
+
+#define GLOBAL_MUTEX(name) \
+	static pthread_mutex_t (name) = PTHREAD_MUTEX_INITIALIZER
+#define GLOBAL_MUTEX_LOCK(name) \
+	pthread_mutex_lock(&(name))
+#define GLOBAL_MUTEX_UNLOCK(name) \
+	pthread_mutex_unlock(&(name))
+
+#else
+
+#define GLOBAL_MUTEX(name) \
+	static Mutex name
+#define GLOBAL_MUTEX_LOCK(name) \
+	name.Lock()
+#define GLOBAL_MUTEX_UNLOCK(name) \
+	name.Unlock()
+
+#endif
 
 }  // namespace re2
 
