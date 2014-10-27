@@ -21,6 +21,9 @@ module type S = sig
     for them, so this library just assumes that it will never see such a string.  The
     failure mode is the search stops early, which isn't bad considering how rare internal
     null bytes are in practice.
+
+    The strings are considered in UTF-8 encoding by default or in
+    ISO 8859-1 if [Options.latin1] is used.
 *)
 
 (** {6 Basic Types} *)
