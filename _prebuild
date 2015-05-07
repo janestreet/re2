@@ -8,7 +8,7 @@ else
 fi
 
 mkdir -p _build/lib
-rsync -a lib/libre2 lib/Makefile lib/*.cpp lib/*.h _build/lib
+rsync -a src/libre2 src/Makefile src/*.cpp src/*.h _build/lib
 cd _build/lib
 
 exec $MAKE ocaml-version-selected-include-path=$(ocamlfind printconf stdlib)

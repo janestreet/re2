@@ -1,4 +1,4 @@
 # OASIS_START
 # OASIS_STOP
-<lib{,_test}/*.ml{,i}> : syntax_camlp4o
-"lib/options.ml": for-pack(Re2)
+<{src,test}/*.ml{,i}> : syntax_camlp4o
+"src/options.ml": for-pack(Re2)

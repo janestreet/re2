@@ -19,7 +19,7 @@ PreBuildCommand:      ./_prebuild
 PostInstallCommand:   ocamlfind install -add re2 _build/lib/libre2_stubs.a -dll _build/lib/dllre2_stubs.so 
 
 Library re2
-  Path:               lib
+  Path:               src
   FindlibName:        re2
   Pack:               true
   Modules:            Options,
