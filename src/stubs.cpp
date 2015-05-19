@@ -160,13 +160,13 @@ extern "C" {
     caml_register_custom_operations(&mlre2__custom_regex_ops);
   }
 
-  static int new_pos(const char *input, StringPiece &remaining, int incr, StringPiece &match) {
+  static int new_pos(const char *input, StringPiece &remaining, int startpos, StringPiece &match) {
     if (remaining.length() < 0) {
       return -1;
     } else {
       /* casting these size_t's to int is safe because StringPiece's track
        * their lengths using ints */
-      size_t first_unexamined = remaining.data() + incr - input;
+      size_t first_unexamined = remaining.data() + startpos - input;
       size_t first_unmatched = match.data() - input + match.length();
       return (int) (first_unexamined > first_unmatched ? first_unexamined : first_unmatched);
     }
@@ -342,6 +342,7 @@ extern "C" {
     while (str.length() > startpos
         && re->Match(str, startpos, str.length(), RE2::UNANCHORED, matches, n)) {
       startpos += ensure_progress(str, matches[0]);
+      startpos = new_pos(input, str, startpos, matches[0]);
       /* push_back followed by back-to-front consing gives the correct final order */
       if (sub->data()) {
         results.push_back(*sub);

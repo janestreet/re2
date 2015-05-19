@@ -31,7 +31,7 @@ Prefilter::Prefilter(Op op) {
 Prefilter::~Prefilter() {
   VLOG(10) << "Deleted: " << alloc_id_;
   if (subs_) {
-    for (int i = 0; i < subs_->size(); i++)
+    for (size_t i = 0; i < subs_->size(); i++)
       delete (*subs_)[i];
     delete subs_;
     subs_ = NULL;
@@ -100,7 +100,7 @@ Prefilter* Prefilter::AndOr(Op op, Prefilter* a, Prefilter* b) {
 
   // If a and b match op, merge their contents.
   if (a->op() == op && b->op() == op) {
-    for (int i = 0; i < b->subs()->size(); i++) {
+    for (size_t i = 0; i < b->subs()->size(); i++) {
       Prefilter* bb = (*b->subs())[i];
       a->subs()->push_back(bb);
     }
@@ -265,14 +265,6 @@ Prefilter* Prefilter::Info::TakeMatch() {
 
 // Format a Info in string form.
 string Prefilter::Info::ToString() {
-  if (this == NULL) {
-    // Sometimes when iterating on children of a node,
-    // some children might have NULL Info. Adding
-    // the check here for NULL to take care of cases where
-    // the caller is not checking.
-    return "";
-  }
-
   if (is_exact_) {
     int n = 0;
     string s;
@@ -500,7 +492,7 @@ class Prefilter::Info::Walker : public Regexp::Walker<Prefilter::Info*> {
   bool latin1() { return latin1_; }
  private:
   bool latin1_;
-  DISALLOW_EVIL_CONSTRUCTORS(Walker);
+  DISALLOW_COPY_AND_ASSIGN(Walker);
 };
 
 Prefilter::Info* Prefilter::BuildInfo(Regexp* re) {
@@ -640,7 +632,7 @@ Prefilter::Info* Prefilter::Info::Walker::PostVisit(
 
   if (Trace) {
     VLOG(0) << "BuildInfo " << re->ToString()
-            << ": " << info->ToString();
+            << ": " << (info ? info->ToString() : "");
   }
 
   return info;
@@ -665,9 +657,6 @@ Prefilter* Prefilter::FromRegexp(Regexp* re) {
 }
 
 string Prefilter::DebugString() const {
-  if (this == NULL)
-    return "<nil>";
-
   switch (op_) {
     default:
       LOG(DFATAL) << "Bad op in Prefilter::DebugString: " << op_;
@@ -680,19 +669,21 @@ string Prefilter::DebugString() const {
       return "";
     case AND: {
       string s = "";
-      for (int i = 0; i < subs_->size(); i++) {
+      for (size_t i = 0; i < subs_->size(); i++) {
         if (i > 0)
           s += " ";
-        s += (*subs_)[i]->DebugString();
+        Prefilter* sub = (*subs_)[i];
+        s += sub ? sub->DebugString() : "<nil>";
       }
       return s;
     }
     case OR: {
       string s = "(";
-      for (int i = 0; i < subs_->size(); i++) {
+      for (size_t i = 0; i < subs_->size(); i++) {
         if (i > 0)
           s += "|";
-        s += (*subs_)[i]->DebugString();
+        Prefilter* sub = (*subs_)[i];
+        s += sub ? sub->DebugString() : "<nil>";
       }
       s += ")";
       return s;

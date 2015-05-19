@@ -1,3 +1,18 @@
+## 112.35.00
+
+- Fixed a bug in `Re2.find_all_exn`, extant since 2014-01-23, in which
+  it returns spurious extra matches.
+
+    Using pattern `b` and input `aaaaaaaaaaaab` is expected to return
+    a single match at the end of the input but instead returned the
+    match multiple times, approximately as many times as
+    `input length / min(match length, 1)`.
+
+    Added tests for this function and also `get_matches` which uses the
+    same code.
+
+- Updated to new version of upstream library.
+
 ## 111.08.00
 
 - Upgraded to upstream library version 20140304.

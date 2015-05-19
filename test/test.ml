@@ -126,6 +126,10 @@ let _ = run_test_tt_main ("creation" >::: [
   "find_all-request-submatch-did-not-capture" >:: with_re (fun re ->
     assert_strings_equal ~expected:[ "baz"; "baz" ]
       (Re2.find_all_exn ~sub:(`Name "baz") re default_input));
+  "find_all-basic" >:: (fun () ->
+    let re = Re2.create_exn "b" in
+    assert_strings_equal ~expected:[ "b"; ]
+      (Re2.find_all_exn re "aaaaaaaaaaaaaaaaaaaaaaaab"));
 
   (** find_submatches **)
   "find_submatches" >:: with_re (fun re ->
@@ -306,4 +310,12 @@ let _ = run_test_tt_main ("creation" >::: [
       try assert_failure (Re2.Match.get_exn ~sub:(`Index 1) m) with
       | Re2.Exceptions.Regex_no_such_subpattern (_, 1) -> ()));
   (* not testing replace because it gets its Match.t values from get_matches *)
+
+  (** get_matches *)
+  "get_matches-basic" >:: (fun () ->
+    let re = Re2.create_exn "b" in
+    Re2.get_matches_exn re "aaaaaaaaaaaaaaab"
+    |> List.map ~f:(Re2.Match.get_exn ~sub:(`Index 0))
+    |> assert_strings_equal ~expected:[ "b" ]
+  );
 ]) ;;
