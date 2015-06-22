@@ -626,7 +626,7 @@ let dispatch = function
     rule "Generate src/options.ml"
       ~prod:"src/options.ml"
       ~deps:["src/options.mlp"; "src/enum_x_macro.h"]
-      (fun _ _ -> Cmd (S[A"gcc"; A"-E"; A"-P"; A"-x"; A"c";
+      (fun _ _ -> Cmd (S[A"cc"; A"-E"; A"-P"; A"-x"; A"c";
                          P"src/options.mlp"; A"-o"; P"src/options.ml"]));
 
     flag ["ocaml"; "link"; "library"; "native"] (S[A"-cclib"; A"-Llib";
