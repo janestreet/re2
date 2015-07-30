@@ -31,8 +31,8 @@ let () =
     let re = Re2.create_exn "\\\\[0-9]" in
     let template = Format.sprintf "%c[4m\\0%c[24m" (Char.chr 27) (Char.chr 27) in
     match  (Re2.rewrite re ~template !rewrite) with
-    | Core.Std.Result.Ok s -> rewrite := s
-    | Core.Std.Result.Error _ -> ()
+    | Core_kernel.Std.Result.Ok s -> rewrite := s
+    | Core_kernel.Std.Result.Error _ -> ()
 ;;
 
 let re =
@@ -80,8 +80,8 @@ let _ =
     | Some r -> Some (r, channel))
   ~fold:(fun channel str_result ->
     match str_result with
-    | Core.Std.Result.Error _ -> channel
-    | Core.Std.Result.Ok str -> output_string channel (str ^ "\n") ; channel)
+    | Core_kernel.Std.Result.Error _ -> channel
+    | Core_kernel.Std.Result.Ok str -> output_string channel (str ^ "\n") ; channel)
   ~init:stdout
   stdin
 ;;

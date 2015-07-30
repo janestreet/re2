@@ -5,7 +5,7 @@
     that make it more efficient to drop down into C directly.
 *)
 
-open Core.Std
+open Core_kernel.Std
 
 type t
 
@@ -185,8 +185,7 @@ let find_submatches_exn t input =
   let it = Iterator.create ~input t in
   let n = num_submatches t in
   let matches = Iterator.next_exn ~sub:(`Index n) it in
-  Array.init n ~f:(fun i ->
-    try Some (Match.get_exn ~sub:(`Index i) matches) with _ -> None)
+  Array.init n ~f:(fun i -> Match.get ~sub:(`Index i) matches)
 
 let find_submatches t input = Or_error.try_with (fun () -> find_submatches_exn t input)
 
@@ -344,3 +343,15 @@ TEST_MODULE = struct
     <:test_eq< string >> "aXYZ" (replace_exn re "XYZ" ~f:(const "a"))
 
 end
+
+BENCH_INDEXED "find_submatches with many Nones" n [5;10;50;100;200] =
+  let regex =
+    "^" ^
+    String.concat ~sep:"|"
+      (List.init n ~f:(fun i -> "(" ^ Int.to_string i ^ ")"))
+    ^ "$"
+    |> create_exn
+  in
+  (fun () ->
+     let _r = find_submatches regex (Int.to_string n) in
+     ())

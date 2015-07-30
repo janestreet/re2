@@ -1,4 +1,4 @@
-open Core.Std
+open Core_kernel.Std
 
 module type S = sig
 
@@ -14,7 +14,7 @@ module type S = sig
     > assertions, because they cannot be implemented efficiently. The syntax page gives
     > full details.
 
-    Syntax reference: http://code.google.com/p/re2/wiki/Syntax
+    Syntax reference: https://github.com/google/re2/wiki/Syntax
  **)
 
 (** Although OCaml strings may legally have internal null bytes, it is expensive to check

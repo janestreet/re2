@@ -1,5 +1,5 @@
 (** This module uses the X-macro technique to keep a variant type in ML synchronized with
- an enum in C.  Check the OMakefile to figure out which files are safe to edit and which
+ an enum in C.  Check the jbuild file to figure out which files are safe to edit and which
  files are generated during the build.  To help distinguish the two, the next comment is
  omitted from the generated copy.  **)
 

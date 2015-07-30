@@ -1,3 +1,43 @@
+## 113.00.00
+
+- Improved `Re2.find_submatches` on big patterns with many submatches
+  unmatched, e.g. =(ABC)|(DEF)|(GHI)|(KLM)|...=.
+
+    Without the fix:
+
+    +-------------------------------------------------------+--------------+------------+----------+----------+------------+
+    | Name                                                  |     Time/Run |    mWd/Run | mjWd/Run | Prom/Run | Percentage |
+    +-------------------------------------------------------+--------------+------------+----------+----------+------------+
+    | [re2_internal.ml] find_submatches with many Nones:5   |     406.81ns |     30.00w |          |          |      0.08% |
+    | [re2_internal.ml] find_submatches with many Nones:10  |   2_385.11ns |    207.00w |          |          |      0.47% |
+    | [re2_internal.ml] find_submatches with many Nones:50  |  12_772.97ns |  2_072.00w |    0.33w |    0.33w |      2.53% |
+    | [re2_internal.ml] find_submatches with many Nones:100 |  43_196.95ns |  7_191.00w |    2.03w |    2.03w |      8.56% |
+    | [re2_internal.ml] find_submatches with many Nones:200 | 504_884.95ns | 29_316.00w |   16.05w |   16.05w |    100.00% |
+    +-------------------------------------------------------+--------------+------------+----------+----------+------------+
+
+    With it:
+
+    +-------------------------------------------------------+--------------+-----------+----------+----------+------------+
+    | Name                                                  |     Time/Run |   mWd/Run | mjWd/Run | Prom/Run | Percentage |
+    +-------------------------------------------------------+--------------+-----------+----------+----------+------------+
+    | [re2_internal.ml] find_submatches with many Nones:5   |     408.24ns |    30.00w |          |          |      0.12% |
+    | [re2_internal.ml] find_submatches with many Nones:10  |   1_607.67ns |   163.00w |          |          |      0.48% |
+    | [re2_internal.ml] find_submatches with many Nones:50  |   3_223.89ns |   563.00w |          |          |      0.96% |
+    | [re2_internal.ml] find_submatches with many Nones:100 |   5_288.09ns | 1_063.00w |    0.20w |    0.20w |      1.58% |
+    | [re2_internal.ml] find_submatches with many Nones:200 | 334_107.81ns | 2_063.00w |    0.79w |    0.79w |    100.00% |
+    +-------------------------------------------------------+--------------+-----------+----------+----------+------------+
+
+- Fixed build on FreeBSD.
+
+    Excise direct mention of g++ from re2 Makefile, preferring the inbuilt CXX
+    macro. This fixes the build on FreeBSD (yes, really).
+
+- Added an applicative interface to building/using regular expressions.
+
+- Made Re2 depend only on `Core_kernel`, not `Core`.
+
+    Fixes janestreet/re2#6
+
 ## 112.35.00
 
 - Fixed a bug in `Re2.find_all_exn`, extant since 2014-01-23, in which

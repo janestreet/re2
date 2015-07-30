@@ -1,5 +1,5 @@
 open OUnit
-open Core.Std
+open Core_kernel.Std
 
 (* This is to test that the two types unify as expected.  If it compiles, it passes. *)
 let (_ : Re2.Std.Re2.t) = Re2.Regex.create_exn "."
