@@ -1,4 +1,8 @@
+<**/*.ml{,i}>: warn(-40), no_alias_deps
+<**/*>: thread
+# This prevents the implicit addition of -ppx options by ocamlfind
+<**/*.ml{,i}>: predicate(ppx_driver)
+<src/*.ml>: for-pack(Re2)
+<src/*.ml{,i}>: pp(ppx-jane -dump-ast -inline-test-lib re2)
 # OASIS_START
 # OASIS_STOP
-<{src,test}/*.ml{,i}> : syntax_camlp4o
-"src/options.ml": for-pack(Re2)

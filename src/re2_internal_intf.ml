@@ -28,7 +28,7 @@ module type S = sig
 
 (** {6 Basic Types} *)
 
-type t with bin_io, compare, sexp
+type t [@@deriving bin_io, compare, sexp]
 type regex = t
 
 (** Subpatterns are referenced by name if labelled with the /(?P<...>...)/ syntax, or else
@@ -163,7 +163,7 @@ end
 
 module Match : sig
   (** A Match.t is the result of applying a regex to an input string *)
-  type t with sexp_of
+  type t [@@deriving sexp_of]
 
   (** If location information has been omitted (e.g., via [~sub]), the error returned is
       [Regex_no_such_subpattern], just as though that subpattern were never defined.
@@ -196,10 +196,6 @@ val get_matches_exn : ?sub:id_t -> ?max:int -> t -> string -> Match.t list
     substring matched by [pattern] transformed by [f].
 
     @param only (default: all) replace only the nth match
-
-    @param f if [f] returns [None], the original match is put back in; if it
-    returns [Some s] then [s] is substituted for the matched string.  (So,
-    returning Some "" means delete the matched string.)
 *)
 val replace
   :  ?sub:id_t

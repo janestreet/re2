@@ -1,3 +1,12 @@
+## 113.24.00
+
+- Switched to PPX.
+
+- Add `Re2.Parser.any_string` combinator.
+
+  There are no tests because `any_string` is constructed only from the tested
+  API and there's almost no interesting properties of it that can be verified.
+
 ## 113.00.00
 
 - Improved `Re2.find_submatches` on big patterns with many submatches
@@ -110,11 +119,11 @@
     ```
 
     This is in `mlre2__create_re` if we fail to compile the regular
-    expression.  Notice how we delete the re object before we use the pts
-    to its' error string.  (Notice that in C++ `c_str()` returns a pointer
-    to the internal data of the string object it does NOT create a copy
-    and `error()` just returns a reference to the regular expression objects
-    error string member `*error_`).
+    expression.  Notice how we delete the re object before we use its'
+    error string.  (Notice that in C++ `c_str()` returns a pointer to
+    the internal data of the string object it does NOT create a copy
+    and `error()` just returns a reference to the regular expression
+    objects error string member `*error_`).
 
     So if `caml_raise_with_string` has to allocate on the heap to create
     the exception or the copy of the string that might invalidate the ptr

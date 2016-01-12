@@ -14,7 +14,7 @@ CXXFLAGS?=-Wall -O3 -g -pthread # can override
 RE2_CXXFLAGS?=-Wno-sign-compare -c -I. $(CCPCRE)  # required
 LDFLAGS?=
 AR?=ar
-ARFLAGS?=rsc
+ARFLAGS=rsc
 NM?=nm
 NMFLAGS?=-p
 

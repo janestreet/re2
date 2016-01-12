@@ -1,5 +1,5 @@
 #include <vector>
-#include <re2/re2.h>
+#include "re2/re2.h"
 //#define DEBUG
 #ifdef DEBUG
 #include <iostream>

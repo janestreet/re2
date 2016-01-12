@@ -11,4 +11,9 @@ mkdir -p _build/lib
 rsync -a src/libre2 src/Makefile src/*.cpp src/*.h _build/lib
 cd _build/lib
 
+OCAMLC="$1"
+if $OCAMLC -config | grep '^bytecomp_c_compiler:' | grep -qow -- '-m32'; then
+    export CXX="g++ -m32"
+fi
+
 exec $MAKE ocaml-version-selected-include-path=$(ocamlfind printconf stdlib)

@@ -114,7 +114,7 @@ module Match = struct
     rex      : regex sexp_opaque;
     input    : string;
     captures : (int * int) option array;
-  } with sexp_of
+  } [@@deriving sexp_of]
 
   let get_pos_exn ~sub t =
     let i = index_of_id_exn t.rex sub in
@@ -312,39 +312,39 @@ module Infix = struct
   let (=~)   input t = matches t input
 end
 
-TEST_MODULE = struct
-  TEST = begin
+let%test_module _ = (module struct
+  let%test _ = begin
     let re = create_exn "^(.*)\\\\" in
     let buf = Bin_prot.Common.create_buf 100 in
     ignore (bin_write_t buf ~pos:0 re : int);
     Int.(=) 0 (compare re (bin_read_t buf ~pos_ref:(ref 0)))
   end
 
-  TEST = begin
+  let%test _ = begin
     let re = create_exn "^(.*)\\\\" in
     Int.(=) 0 (compare re (t_of_sexp (sexp_of_t re)))
   end
 
-  TEST = begin
+  let%test _ = begin
     let foo, a_star, dot_capture = create_exn "foo", create_exn "a*", create_exn "(.)" in
     let (<) a b = compare a b < 0 in
     a_star < foo && dot_capture < a_star && dot_capture < foo
   end
 
-  TEST_UNIT =
+  let%test_unit _ =
     let re = create_exn "^" in
     match get_matches_exn re "XYZ" with
     | [ the_match ] ->
-      <:test_eq< int * int >> (0, 0) (Match.get_pos_exn ~sub:(`Index 0) the_match)
-    | other -> failwiths "expected exactly one match" other <:sexp_of< Match.t list >>
+      [%test_eq: int * int] (0, 0) (Match.get_pos_exn ~sub:(`Index 0) the_match)
+    | other -> failwiths "expected exactly one match" other [%sexp_of: Match.t list]
 
-  TEST_UNIT =
+  let%test_unit _ =
     let re = create_exn "^" in
-    <:test_eq< string >> "aXYZ" (replace_exn re "XYZ" ~f:(const "a"))
+    [%test_eq: string] "aXYZ" (replace_exn re "XYZ" ~f:(const "a"))
 
-end
+end)
 
-BENCH_INDEXED "find_submatches with many Nones" n [5;10;50;100;200] =
+let%bench_fun "find_submatches with many Nones" [@indexed n = [5;10;50;100;200]] =
   let regex =
     "^" ^
     String.concat ~sep:"|"

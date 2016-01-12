@@ -1,49 +1,42 @@
-OASISFormat:      0.3
-OCamlVersion:     >= 4.00.0
-FindlibVersion:   >= 1.3.2
-Name:             re2
-Version:          113.00.00
-Synopsis:         OCaml bindings for RE2
-Authors:          Jane Street Group, LLC <opensource@janestreet.com>
-Copyrights:       (C) 2013 Jane Street Group LLC <opensource@janestreet.com>
-Maintainers:      Jane Street Group, LLC <opensource@janestreet.com>
-License:          Apache-2.0
-LicenseFile:      LICENSE.txt
-Homepage:         https://github.com/janestreet/re2
-Plugins:          StdFiles (0.3), DevFiles (0.3), META (0.3)
-XStdFilesAUTHORS: false
-XStdFilesREADME:  false
-BuildTools:       ocamlbuild, camlp4o, make, cpp, rsync
+OASISFormat:           0.4
+OCamlVersion:          >= 4.02.3
+FindlibVersion:        >= 1.3.2
+Name:                  re2
+Version:               113.24.00
+Synopsis:              OCaml bindings for RE2, Google's regular expression library
+Authors:               Jane Street Group, LLC <opensource@janestreet.com>
+Copyrights:            (C) 2013-2016 Jane Street Group LLC <opensource@janestreet.com>
+Maintainers:           Jane Street Group, LLC <opensource@janestreet.com>
+License:               Apache-2.0
+LicenseFile:           LICENSE.txt
+Homepage:              https://github.com/janestreet/re2
+Plugins:               StdFiles (0.3), DevFiles (0.3), META (0.3)
+XStdFilesAUTHORS:      false
+XStdFilesREADME:       false
+BuildTools:            ocamlbuild
+AlphaFeatures:         ocamlbuild_more_args
+XOCamlbuildPluginTags: package(ppx_driver.ocamlbuild)
+FilesAB:               META.ab
 
-PreBuildCommand:      ./_prebuild
-PostInstallCommand:   ocamlfind install -add re2 _build/lib/libre2_stubs.a -dll _build/lib/dllre2_stubs.so 
+PreBuildCommand: ./_prebuild $ocamlc
 
 Library re2
-  Path:               src
-  FindlibName:        re2
-  Pack:               true
-  Modules:            Options,
-                      Parser,
-                      Re2_internal,
-                      Re2_internal_intf,
-                      Regex,
-                      Std
-  BuildDepends:       core,
-                      pa_ounit,
-                      pa_ounit.syntax,
-                      pa_test.syntax,
-                      pa_bench,
-                      pa_bench.syntax,
-                      bin_prot,
-                      bin_prot.syntax,
-                      sexplib,
-                      sexplib.syntax,
-                      comparelib.syntax,
-                      threads
-  XMETARequires:      core,
-                      pa_ounit,
-                      pa_test,
-                      pa_bench,
-                      bin_prot,
-                      sexplib,
-                      threads
+  Path:         src
+  Pack:         true
+  Modules:      Options,
+                Parser,
+                Parser_intf,
+                Re2_internal,
+                Re2_internal_intf,
+                Regex,
+                Std
+  BuildDepends: bin_prot,
+                core_kernel,
+                fieldslib,
+                ppx_assert.runtime-lib,
+                ppx_bench.runtime-lib,
+                ppx_expect.collector,
+                ppx_inline_test.runtime-lib,
+                sexplib,
+                typerep,
+                variantslib
