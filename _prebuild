@@ -16,4 +16,4 @@ if $OCAMLC -config | grep '^bytecomp_c_compiler:' | grep -qow -- '-m32'; then
     export CXX="g++ -m32"
 fi
 
-exec $MAKE ocaml-version-selected-include-path=$(ocamlfind printconf stdlib)
+exec $MAKE ocaml-version-selected-include-path=$(ocamlfind printconf stdlib) CXX_WARNINGS=""
