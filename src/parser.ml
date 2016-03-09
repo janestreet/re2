@@ -505,7 +505,9 @@ end
 include Body
 
 module Let_syntax = struct
-  include Body
-  module Open_on_rhs = Body
-  module Open_in_body = struct end
+  module Let_syntax = struct
+    include Body
+    module Open_on_rhs = Body
+    module Open_in_body = struct end
+  end
 end
