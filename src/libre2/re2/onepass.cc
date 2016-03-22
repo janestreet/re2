@@ -134,11 +134,11 @@ struct OneState;
 // maps next input bytes into equivalence classes, to reduce
 // the memory footprint.)
 struct OneState {
-  uint32 matchcond;   // conditions to match right now.
-  uint32 action[1];
+  uint32_t matchcond;   // conditions to match right now.
+  uint32_t action[1];
 };
 
-// The uint32 conditions in the action are a combination of
+// The uint32_t conditions in the action are a combination of
 // condition and capture bits and the next state.  The bottom 16 bits
 // are the condition and capture bits, and the top 16 are the index of
 // the next state.
@@ -164,10 +164,10 @@ static const int    kRealMaxCap   = (kIndexShift - kRealCapShift) / 2 * 2;
 static const int    kCapShift     = kRealCapShift - 2;
 static const int    kMaxCap       = kRealMaxCap + 2;
 
-static const uint32 kMatchWins    = 1 << kEmptyShift;
-static const uint32 kCapMask      = ((1 << kRealMaxCap) - 1) << kRealCapShift;
+static const uint32_t kMatchWins    = 1 << kEmptyShift;
+static const uint32_t kCapMask      = ((1 << kRealMaxCap) - 1) << kRealCapShift;
 
-static const uint32 kImpossible   = kEmptyWordBoundary | kEmptyNonWordBoundary;
+static const uint32_t kImpossible   = kEmptyWordBoundary | kEmptyNonWordBoundary;
 
 // Check, at compile time, that prog.h agrees with math above.
 // This function is never called.
@@ -179,8 +179,8 @@ void OnePass_Checks() {
                  kMaxCap_disagrees_with_kMaxOnePassCapture);
 }
 
-static bool Satisfy(uint32 cond, const StringPiece& context, const char* p) {
-  uint32 satisfied = Prog::EmptyFlags(context, p);
+static bool Satisfy(uint32_t cond, const StringPiece& context, const char* p) {
+  uint32_t satisfied = Prog::EmptyFlags(context, p);
   if (cond & kEmptyAllFlags & ~satisfied)
     return false;
   return true;
@@ -188,7 +188,7 @@ static bool Satisfy(uint32 cond, const StringPiece& context, const char* p) {
 
 // Apply the capture bits in cond, saving p to the appropriate
 // locations in cap[].
-static void ApplyCaptures(uint32 cond, const char* p,
+static void ApplyCaptures(uint32_t cond, const char* p,
                           const char** cap, int ncap) {
   for (int i = 2; i < ncap; i++)
     if (cond & (1 << kCapShift << i))
@@ -243,7 +243,7 @@ bool Prog::SearchOnePass(const StringPiece& text,
   // This is worth about 5%.
   volatile OneState* state = onepass_start_;
   volatile uint8* nodes = onepass_nodes_;
-  volatile uint32 statesize = onepass_statesize_;
+  volatile uint32_t statesize = onepass_statesize_;
   uint8* bytemap = bytemap_;
   const char* bp = text.begin();
   const char* ep = text.end();
@@ -251,16 +251,16 @@ bool Prog::SearchOnePass(const StringPiece& text,
   bool matched = false;
   matchcap[0] = bp;
   cap[0] = bp;
-  uint32 nextmatchcond = state->matchcond;
+  uint32_t nextmatchcond = state->matchcond;
   for (p = bp; p < ep; p++) {
     int c = bytemap[*p & 0xFF];
-    uint32 matchcond = nextmatchcond;
-    uint32 cond = state->action[c];
+    uint32_t matchcond = nextmatchcond;
+    uint32_t cond = state->action[c];
 
     // Determine whether we can reach act->next.
     // If so, advance state and nextmatchcond.
     if ((cond & kEmptyAllFlags) == 0 || Satisfy(cond, context, p)) {
-      uint32 nextindex = cond >> kIndexShift;
+      uint32_t nextindex = cond >> kIndexShift;
       state = IndexToNode(nodes, statesize, nextindex);
       nextmatchcond = state->matchcond;
     } else {
@@ -319,7 +319,7 @@ bool Prog::SearchOnePass(const StringPiece& text,
 
   // Look for match at end of input.
   {
-    uint32 matchcond = state->matchcond;
+    uint32_t matchcond = state->matchcond;
     if (matchcond != kImpossible &&
         ((matchcond & kEmptyAllFlags) == 0 || Satisfy(matchcond, context, p))) {
       if (nmatch > 1 && (matchcond & kCapMask))
@@ -357,7 +357,7 @@ static bool AddQ(Instq *q, int id) {
 
 struct InstCond {
   int id;
-  uint32 cond;
+  uint32_t cond;
 };
 
 // Returns whether this is a one-pass program; that is,
@@ -388,7 +388,7 @@ bool Prog::IsOnePass() {
   // Limit max node count to 65000 as a conservative estimate to
   // avoid overflowing 16-bit node index in encoding.
   int maxnodes = 2 + byte_inst_count_;
-  int statesize = sizeof(OneState) + (bytemap_range_-1)*sizeof(uint32);
+  int statesize = sizeof(OneState) + (bytemap_range_-1)*sizeof(uint32_t);
   if (maxnodes >= 65000 || dfa_mem_ / 4 / statesize < maxnodes)
     return false;
 
@@ -428,7 +428,7 @@ bool Prog::IsOnePass() {
     while (nstack > 0) {
       int id = stack[--nstack].id;
       Prog::Inst* ip = inst(id);
-      uint32 cond = stack[nstack].cond;
+      uint32_t cond = stack[nstack].cond;
       switch (ip->opcode()) {
         case kInstAltMatch:
           // TODO(rsc): Ignoring kInstAltMatch optimization.
@@ -465,8 +465,8 @@ bool Prog::IsOnePass() {
           for (int c = ip->lo(); c <= ip->hi(); c++) {
             int b = bytemap_[c];
             c = unbytemap_[b];  // last c in byte class
-            uint32 act = node->action[b];
-            uint32 newact = (nextindex << kIndexShift) | cond;
+            uint32_t act = node->action[b];
+            uint32_t newact = (nextindex << kIndexShift) | cond;
             if ((act & kImpossible) == kImpossible) {
               node->action[b] = newact;
             } else if (act != newact) {
@@ -485,8 +485,8 @@ bool Prog::IsOnePass() {
             for (int c = lo; c <= hi; c++) {
               int b = bytemap_[c];
               c = unbytemap_[b];  // last c in class
-              uint32 act = node->action[b];
-              uint32 newact = (nextindex << kIndexShift) | cond;
+              uint32_t act = node->action[b];
+              uint32_t newact = (nextindex << kIndexShift) | cond;
               if ((act & kImpossible) == kImpossible) {
                 node->action[b] = newact;
               } else if (act != newact) {

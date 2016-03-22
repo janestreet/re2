@@ -34,14 +34,14 @@ class Bitmap {
   void Clear(int k) {
     w_[k >> WordLog] &= ~(1<<(k & 31));
   }
-  uint32 Word(int i) const {
+  uint32_t Word(int i) const {
     return w_[i];
   }
 
  private:
   static const int WordLog = 5;
   static const int Words = (Bits+31)/32;
-  uint32 w_[Words];
+  uint32_t w_[Words];
   DISALLOW_COPY_AND_ASSIGN(Bitmap);
 };
 
@@ -86,12 +86,12 @@ class Prog {
     Inst() : out_opcode_(0), out1_(0) { }
 
     // Constructors per opcode
-    void InitAlt(uint32 out, uint32 out1);
-    void InitByteRange(int lo, int hi, int foldcase, uint32 out);
-    void InitCapture(int cap, uint32 out);
-    void InitEmptyWidth(EmptyOp empty, uint32 out);
+    void InitAlt(uint32_t out, uint32_t out1);
+    void InitByteRange(int lo, int hi, int foldcase, uint32_t out);
+    void InitCapture(int cap, uint32_t out);
+    void InitEmptyWidth(EmptyOp empty, uint32_t out);
     void InitMatch(int id);
-    void InitNop(uint32 out);
+    void InitNop(uint32_t out);
     void InitFail();
 
     // Getters
@@ -138,9 +138,9 @@ class Prog {
       out_opcode_ = (out<<3) | opcode;
     }
 
-    uint32 out_opcode_;  // 29 bits of out, 3 (low) bits opcode
+    uint32_t out_opcode_;  // 29 bits of out, 3 (low) bits opcode
     union {              // additional instruction arguments:
-      uint32 out1_;      // opcode == kInstAlt
+      uint32_t out1_;      // opcode == kInstAlt
                          //   alternate next instruction
 
       int32 cap_;        // opcode == kInstCapture
@@ -228,7 +228,7 @@ class Prog {
 
   // Returns the set of kEmpty flags that are in effect at
   // position p within context.
-  static uint32 EmptyFlags(const StringPiece& context, const char* p);
+  static uint32_t EmptyFlags(const StringPiece& context, const char* p);
 
   // Returns whether byte c is a word character: ASCII only.
   // Used by the implementation of \b and \B.

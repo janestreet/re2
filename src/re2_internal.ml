@@ -13,9 +13,9 @@ module Options = Options
 
 external cre2__init : unit -> unit = "mlre2__init"
 external cre2__create_re : Options.enum list -> string -> t = "mlre2__create_re"
-external cre2__num_submatches : t -> int = "mlre2__num_submatches" "noalloc"
+external cre2__num_submatches : t -> int = "mlre2__num_submatches" [@@noalloc]
 
-external cre2__submatch_index : t -> string -> int = "mlre2__submatch_index" "noalloc"
+external cre2__submatch_index : t -> string -> int = "mlre2__submatch_index" [@@noalloc]
 
 external cre2__pattern : t -> string = "mlre2__pattern"
 
@@ -27,12 +27,12 @@ external cre2__iter_next :
   -> (int * (int * int) option array option)
   = "mlre2__iter_next"
 
-external cre2__matches : t -> string -> bool = "mlre2__matches" "noalloc"
+external cre2__matches : t -> string -> bool = "mlre2__matches" [@@noalloc]
 external cre2__find_all : t -> int -> string -> string list = "mlre2__find_all"
 external cre2__find_first : t -> int -> string -> string = "mlre2__find_first"
 external cre2__rewrite_exn : t -> string -> string -> string = "mlre2__rewrite_exn"
 external cre2__valid_rewrite_template : t -> string -> bool =
-  "mlre2__valid_rewrite_template" "noalloc"
+  "mlre2__valid_rewrite_template" [@@noalloc]
 external cre2__escape : string -> string = "mlre2__escape"
 
 type regex = t

@@ -48,8 +48,8 @@ static string EngineString(Engine t) {
 }
 
 // Returns bit mask of engines to use.
-static uint32 Engines() {
-  static uint32 cached_engines;
+static uint32_t Engines() {
+  static uint32_t cached_engines;
   static bool did_parse;
 
   if (did_parse)

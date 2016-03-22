@@ -28,14 +28,14 @@ namespace re2 {
 // is always the fail instruction, which never appears on a list.
 
 struct PatchList {
-  uint32 p;
+  uint32_t p;
 
   // Returns patch list containing just p.
-  static PatchList Mk(uint32 p);
+  static PatchList Mk(uint32_t p);
 
   // Patches all the entries on l to have value v.
   // Caller must not ever use patch list again.
-  static void Patch(Prog::Inst *inst0, PatchList l, uint32 v);
+  static void Patch(Prog::Inst *inst0, PatchList l, uint32_t v);
 
   // Deref returns the next pointer pointed at by p.
   static PatchList Deref(Prog::Inst *inst0, PatchList l);
@@ -47,7 +47,7 @@ struct PatchList {
 static PatchList nullPatchList = { 0 };
 
 // Returns patch list containing just p.
-PatchList PatchList::Mk(uint32 p) {
+PatchList PatchList::Mk(uint32_t p) {
   PatchList l;
   l.p = p;
   return l;
@@ -64,7 +64,7 @@ PatchList PatchList::Deref(Prog::Inst* inst0, PatchList l) {
 }
 
 // Patches all the entries on l to have value v.
-void PatchList::Patch(Prog::Inst *inst0, PatchList l, uint32 val) {
+void PatchList::Patch(Prog::Inst *inst0, PatchList l, uint32_t val) {
   while (l.p != 0) {
     Prog::Inst* ip = &inst0[l.p>>1];
     if (l.p&1) {
@@ -103,11 +103,11 @@ PatchList PatchList::Append(Prog::Inst* inst0, PatchList l1, PatchList l2) {
 
 // Compiled program fragment.
 struct Frag {
-  uint32 begin;
+  uint32_t begin;
   PatchList end;
 
   Frag() : begin(0) { end.p = 0; }  // needed so Frag can go in vector
-  Frag(uint32 begin, PatchList end) : begin(begin), end(end) {}
+  Frag(uint32_t begin, PatchList end) : begin(begin), end(end) {}
 };
 
 // Input encodings.

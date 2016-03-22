@@ -14,13 +14,13 @@ namespace re2 {
 
 // Constructors per Inst opcode
 
-void Prog::Inst::InitAlt(uint32 out, uint32 out1) {
+void Prog::Inst::InitAlt(uint32_t out, uint32_t out1) {
   DCHECK_EQ(out_opcode_, 0);
   set_out_opcode(out, kInstAlt);
   out1_ = out1;
 }
 
-void Prog::Inst::InitByteRange(int lo, int hi, int foldcase, uint32 out) {
+void Prog::Inst::InitByteRange(int lo, int hi, int foldcase, uint32_t out) {
   DCHECK_EQ(out_opcode_, 0);
   set_out_opcode(out, kInstByteRange);
   lo_ = lo & 0xFF;
@@ -28,13 +28,13 @@ void Prog::Inst::InitByteRange(int lo, int hi, int foldcase, uint32 out) {
   foldcase_ = foldcase;
 }
 
-void Prog::Inst::InitCapture(int cap, uint32 out) {
+void Prog::Inst::InitCapture(int cap, uint32_t out) {
   DCHECK_EQ(out_opcode_, 0);
   set_out_opcode(out, kInstCapture);
   cap_ = cap;
 }
 
-void Prog::Inst::InitEmptyWidth(EmptyOp empty, uint32 out) {
+void Prog::Inst::InitEmptyWidth(EmptyOp empty, uint32_t out) {
   DCHECK_EQ(out_opcode_, 0);
   set_out_opcode(out, kInstEmptyWidth);
   empty_ = empty;
@@ -46,7 +46,7 @@ void Prog::Inst::InitMatch(int32 id) {
   match_id_ = id;
 }
 
-void Prog::Inst::InitNop(uint32 out) {
+void Prog::Inst::InitNop(uint32_t out) {
   DCHECK_EQ(out_opcode_, 0);
   set_opcode(kInstNop);
 }
@@ -260,7 +260,7 @@ static bool IsMatch(Prog* prog, Prog::Inst* ip) {
   }
 }
 
-uint32 Prog::EmptyFlags(const StringPiece& text, const char* p) {
+uint32_t Prog::EmptyFlags(const StringPiece& text, const char* p) {
   int flags = 0;
 
   // ^ and \A
@@ -316,7 +316,7 @@ void Prog::ComputeByteMap() {
 
   COMPILE_ASSERT(8*sizeof(v.Word(0)) == 32, wordsize);
   uint8 n = 0;
-  uint32 bits = 0;
+  uint32_t bits = 0;
   for (int i = 0; i < 256; i++) {
     if ((i&31) == 0)
       bits = v.Word(i >> 5);

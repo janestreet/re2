@@ -71,7 +71,7 @@ class Backtracker {
 
   // Search state
   const char* cap_[64];     // capture registers
-  uint32 *visited_;         // bitmap: (Inst*, char*) pairs already backtracked
+  uint32_t *visited_;         // bitmap: (Inst*, char*) pairs already backtracked
   int nvisited_;            //   # of words in bitmap
 };
 
@@ -123,7 +123,7 @@ bool Backtracker::Search(const StringPiece& text, const StringPiece& context,
   // to text, so have to reallocate on each call to Search.
   delete[] visited_;
   nvisited_ = (prog_->size()*(text.size()+1) + 31)/32;
-  visited_ = new uint32[nvisited_];
+  visited_ = new uint32_t[nvisited_];
   memset(visited_, 0, nvisited_*sizeof visited_[0]);
 
   // Anchored search must start at text.begin().

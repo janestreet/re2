@@ -60,7 +60,7 @@ class BitState {
   int ncap_;
 
   static const int VisitedBits = 32;
-  uint32 *visited_;         // bitmap: (Inst*, char*) pairs already backtracked
+  uint32_t *visited_;         // bitmap: (Inst*, char*) pairs already backtracked
   int nvisited_;            //   # of words in bitmap
 
   Job *job_;                // stack of text positions to explore
@@ -314,7 +314,7 @@ bool BitState::Search(const StringPiece& text, const StringPiece& context,
 
   // Allocate scratch space.
   nvisited_ = (prog_->size() * (text.size()+1) + VisitedBits-1) / VisitedBits;
-  visited_ = new uint32[nvisited_];
+  visited_ = new uint32_t[nvisited_];
   memset(visited_, 0, nvisited_*sizeof visited_[0]);
   // VLOG(0) << "nvisited_ = " << nvisited_;
 

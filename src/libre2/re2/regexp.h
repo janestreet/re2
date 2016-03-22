@@ -597,9 +597,9 @@ class CharClassBuilder {
   void AddRangeFlags(Rune lo, Rune hi, Regexp::ParseFlags parse_flags);
 
  private:
-  static const uint32 AlphaMask = (1<<26) - 1;
-  uint32 upper_;  // bitmap of A-Z
-  uint32 lower_;  // bitmap of a-z
+  static const uint32_t AlphaMask = (1<<26) - 1;
+  uint32_t upper_;  // bitmap of A-Z
+  uint32_t lower_;  // bitmap of a-z
   int nrunes_;
   RuneRangeSet ranges_;
   DISALLOW_COPY_AND_ASSIGN(CharClassBuilder);
