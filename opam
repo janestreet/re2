@@ -27,3 +27,7 @@ depends: [
   "variantslib"
 ]
 available: [ ocaml-version >= "4.03.0" ]
+depexts: [
+  [["fedora"] ["gcc-c++"]]
+  [["oraclelinux"] ["gcc-c++"]]
+]
