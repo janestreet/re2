@@ -1,3 +1,7 @@
+## 113.33.04
+
+- fix build with recent versions of re2
+
 ## 113.24.00
 
 - Switched to PPX.
