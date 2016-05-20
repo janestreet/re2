@@ -143,10 +143,10 @@ module type Parser = sig
   module type S = S
   include S
   module Let_syntax : sig
+    val return : 'a -> 'a t
     module Let_syntax : sig
       include S with type 'a t := 'a t
       module Open_on_rhs : S with type 'a t := 'a t
-      module Open_in_body : sig end
     end
   end
 end
