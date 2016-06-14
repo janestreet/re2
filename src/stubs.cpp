@@ -290,8 +290,9 @@ extern "C" {
     int startpos = Int_val(v_pos);
     StringPiece str = StringPiece(input);
     int max_submatch = Int_val(v_max_submatch) < 0
-      ? re->NumberOfCapturingGroups() + 1 /* +1 for whole match ("subpattern zero") */
+      ? re->NumberOfCapturingGroups()
       : Int_val(v_max_submatch);
+    /* +1 for whole match ("subpattern zero") */
     int n = 1 + (max_submatch > 0 ? max_submatch : 0);
     StringPiece *submatches = new StringPiece[n];
     StringPiece *sub = submatches; /* extra pointer for iterating over [submatches] */

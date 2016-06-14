@@ -61,7 +61,9 @@ module Body = struct
     Staged.stage (fun s ->
       match Re2_internal.get_matches_exn ~max:1 rex s with
       | [] -> None
-      | m :: _ -> Some (to_result 1 (Re2_internal.Match.get_all m)))
+      | m :: _ ->
+        let m = Re2_internal.without_trailing_none m in
+        Some (to_result 1 (Re2_internal.Match.get_all m)))
 
   let run ?case_sensitive t = Staged.unstage (compile ?case_sensitive t)
 

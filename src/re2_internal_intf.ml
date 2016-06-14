@@ -161,6 +161,13 @@ end
 
 (** {6 Complicated Interface} *)
 
+type 'a without_trailing_none [@@deriving sexp_of]
+
+(** This type marks call sites affected by a bugfix that eliminated a trailing None. When
+    you add this wrapper, check that your call site does not still work around the bug by
+    dropping the last element. *)
+val without_trailing_none : 'a -> 'a without_trailing_none
+
 module Match : sig
   (** A Match.t is the result of applying a regex to an input string *)
   type t [@@deriving sexp_of]
@@ -173,7 +180,7 @@ module Match : sig
 
   (** [get_all t] returns all available matches as strings in an array.  For the indexing
       convention, see comment above regarding [sub] parameter. **)
-  val get_all : t -> string option array
+  val get_all : t without_trailing_none -> string option array
 
   (** [get_pos_exn ~sub t] returns the start offset and length in bytes.  Note that for
       variable-width encodings (e.g., UTF-8) this may not be the same as the character
@@ -189,8 +196,19 @@ end
     @param sub (default: all) returned Match.t's will contain only the first [sub]
     matches.
 *)
-val get_matches     : ?sub:id_t -> ?max:int -> t -> string -> Match.t list Or_error.t
-val get_matches_exn : ?sub:id_t -> ?max:int -> t -> string -> Match.t list
+val get_matches
+  : ?sub:id_t
+  -> ?max:int
+  -> t
+  -> string
+  -> Match.t list Or_error.t
+
+val get_matches_exn
+  : ?sub:id_t
+  -> ?max:int
+  -> t
+  -> string
+  -> Match.t list
 
 (** [replace ?sub ?max ~f pattern input] @return an edited copy of [input] with every
     substring matched by [pattern] transformed by [f].

@@ -9,6 +9,10 @@ open Core_kernel.Std
 
 type t
 
+type 'a without_trailing_none = 'a [@@deriving sexp_of]
+
+let without_trailing_none = Fn.id
+
 module Options = Options
 
 external cre2__init : unit -> unit = "mlre2__init"
