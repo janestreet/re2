@@ -773,8 +773,8 @@ TEST(RE2, FullMatchTypeTests) {
     CHECK(!RE2::FullMatch("000x7fffffff", "(.*)", RE2::CRadix(&v)));
   }
   {
-    uint32 v;
-    static const uint32 max = 0xfffffffful;
+    uint32_t v;
+    static const uint32_t max = 0xfffffffful;
     CHECK(RE2::FullMatch("100",         "(\\d+)", &v)); CHECK_EQ(v, 100);
     CHECK(RE2::FullMatch("4294967295",  "(\\d+)", &v)); CHECK_EQ(v, max);
     CHECK(!RE2::FullMatch("4294967296", "(\\d+)", &v));

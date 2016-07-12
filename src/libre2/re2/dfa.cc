@@ -140,7 +140,7 @@ class DFA {
         return 0;
       const char* s = reinterpret_cast<const char*>(a->inst_);
       int len = a->ninst_ * sizeof a->inst_[0];
-      if (sizeof(size_t) == sizeof(uint32))
+      if (sizeof(size_t) == sizeof(uint32_t))
         return Hash32StringWithSeed(s, len, a->flag_);
       else
         return Hash64StringWithSeed(s, len, a->flag_);

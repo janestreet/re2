@@ -119,7 +119,7 @@ TEST(REArgTest, IntTest) {
 }
 
 TEST(REArgTest, UInt32Test) {
-  PARSE_FOR_TYPE(uint32, 3);
+  PARSE_FOR_TYPE(uint32_t, 3);
 }
 
 TEST(REArgTest, Iint64Test) {

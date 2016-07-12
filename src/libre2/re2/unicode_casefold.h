@@ -16,7 +16,7 @@
 //     'K' -> 'K'
 //
 // Like everything Unicode, these tables are big.  If we represent the table
-// as a sorted list of uint32 pairs, it has 2049 entries and is 16 kB.
+// as a sorted list of uint32_t pairs, it has 2049 entries and is 16 kB.
 // Most table entries look like the ones around them:
 // 'A' maps to 'A'+32, 'B' maps to 'B'+32, etc.
 // Instead of listing all the pairs explicitly, we make a list of ranges
