@@ -217,6 +217,10 @@ let get_matches ?sub ?max t input =
   Or_error.try_with (fun () -> get_matches_exn ?sub ?max t input)
 ;;
 
+let first_match_exn t input = List.hd_exn (get_matches_exn t input ~max:1)
+
+let first_match t input = Or_error.try_with (fun () -> first_match_exn t input )
+
 module Substring = struct
 
   type t = {

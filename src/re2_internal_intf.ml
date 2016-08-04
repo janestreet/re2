@@ -210,6 +210,10 @@ val get_matches_exn
   -> string
   -> Match.t list
 
+(** [first_match pattern input] @return the first match iff [pattern] matches [input] *)
+val first_match : t -> string -> Match.t Or_error.t
+val first_match_exn : t -> string -> Match.t
+
 (** [replace ?sub ?max ~f pattern input] @return an edited copy of [input] with every
     substring matched by [pattern] transformed by [f].
 
