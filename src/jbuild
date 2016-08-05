@@ -1,0 +1,37 @@
+(rule
+ ((targets (options.ml))
+  (deps (options.mlp enum_x_macro.h))
+  (action "cpp options.mlp > options.ml")))
+
+;; We overapproximate the dependency of running make by depending on everything
+;; in libre2. It doesn't seem to cause any issue that files in libre2/obj are actually
+;; targets.  And even in theory, we should re-run make at most twice per change: once
+;; when the source files change, and again when that changes the obj files.
+;; 'make' doesn't rebuild in case of variable update (CXX, CXXFLAGS) so
+;; we call 'make clean' first.
+(rule
+ ((targets (libre2.a))
+  (deps ((files_recursively_in libre2)))
+  (action "
+make -s -C libre2 clean
+make -s -C libre2 CXX=\"${CXX}\" CXXFLAGS=\"-Wall -Wno-uninitialized -O3 -g -pthread -fPIC\" obj/libre2.a
+cp libre2/obj/libre2.a .
+")))
+
+(rule
+ ((targets (libre2_stubs.a))
+  (deps (libre2.a stubs.o))
+  ;; We build the stubs archive by hand because we need to merge the
+  ;; archive built by external code [libre2.a] with one extra .o file,
+  ;; and the standard jengaroot rule for building _stubs.a wont do this.
+  (action "rm -f ${@}; cp libre2.a ${@} && ar Dr ${@} stubs.o")))
+
+(library
+ ((name re2)
+  (public_name re2)
+  (libraries (core_kernel))
+  (cclibs (stdc++ pthread))
+  (includes (libre2))
+  (cxx_names (stubs))
+  (cxx_flags (:standard \ -pedantic))
+  (self_build_stubs_archive (re2))))
