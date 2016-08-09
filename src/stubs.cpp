@@ -288,7 +288,8 @@ extern "C" {
     const RE2 * re = Regex_val(v_regex);
     const char * input = String_val(v_input);
     int startpos = Int_val(v_pos);
-    StringPiece str = StringPiece(input);
+    int len = caml_string_length(v_input);
+    StringPiece str = StringPiece(input, len);
     int max_submatch = Int_val(v_max_submatch) < 0
       ? re->NumberOfCapturingGroups()
       : Int_val(v_max_submatch);
@@ -319,7 +320,7 @@ extern "C" {
   }
 
   CAMLprim value mlre2__matches(value v_regex, value v_str) {
-    StringPiece str = String_val(v_str);
+    StringPiece str(String_val(v_str), caml_string_length(v_str));
     return Val_int(Regex_val(v_regex)->Match(str, 0, str.length(),
                                              RE2::UNANCHORED, NULL, 0));
   }
@@ -332,7 +333,8 @@ extern "C" {
 
     const RE2 * re = Regex_val(v_regex);
     const char* input = String_val(v_str);
-    StringPiece str = StringPiece(input);
+    int len = caml_string_length(v_str);
+    StringPiece str = StringPiece(input, len);
     int n = Int_val(v_sub) + 1;
     int startpos = 0;
     StringPiece * matches = new StringPiece[n];
@@ -376,7 +378,8 @@ extern "C" {
 
     const RE2 * re = Regex_val(v_regex);
     const char* input = String_val(v_str);
-    StringPiece str = StringPiece(input);
+    int len = caml_string_length(v_str);
+    StringPiece str = StringPiece(input, len);
     int n = Int_val(v_sub) + 1;
     StringPiece * submatches = new StringPiece[n];
 
@@ -405,7 +408,7 @@ extern "C" {
   }
 
   CAMLprim value mlre2__valid_rewrite_template(value v_regex, value v_template) {
-    StringPiece rewrite = String_val(v_template);
+    StringPiece rewrite(String_val(v_template), caml_string_length(v_template));
     string error;
     return Val_bool(Regex_val(v_regex)->CheckRewriteString(rewrite, &error));
   }
@@ -416,7 +419,7 @@ extern "C" {
 
     /* string(const char*) makes a copy, so [tmp] is safe to modify */
     string tmp = String_val(v_input), error;
-    const StringPiece rewrite = String_val(v_rewrite);
+    const StringPiece rewrite(String_val(v_rewrite), caml_string_length(v_rewrite));
     int num_rewrites = 0;
 
     if (! Regex_val(v_regex)->CheckRewriteString(rewrite, &error)) {
@@ -432,7 +435,7 @@ extern "C" {
 
   CAMLprim value mlre2__escape(value v_str) {
     CAMLparam1(v_str);
-    StringPiece str = String_val(v_str);
+    StringPiece str(String_val(v_str), caml_string_length(v_str));
     CAMLreturn(caml_copy_string(RE2::QuoteMeta(str).c_str()));
   }
 } /* extern "C" */

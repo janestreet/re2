@@ -9,10 +9,7 @@ module type S = sig
       [char] as a character type, but that's just wrong in a multibyte encoding. *)
   type 'a t [@@deriving sexp_of]
 
-  (** [case_sensitive] defaults to [true].
-
-      [compile], [run], and [matches] suffer from Re2's limitations with regards to null
-      bytes in the input: they are considered to end the string. *)
+  (** [case_sensitive] defaults to [true]. *)
   val compile : ?case_sensitive:bool -> 'a t -> (string -> 'a option) Staged.t
   val run     : ?case_sensitive:bool -> 'a t ->  string -> 'a option
   val matches : ?case_sensitive:bool -> 'a t ->  string -> bool
@@ -79,8 +76,6 @@ module type S = sig
       rrr...r (with n copies of r) and has the type ['a t -> 'a list t]. *)
   val times : unit t -> int -> unit t
 
-  (** [string], [Char.one_of], and [Char.not_one_of] raise exceptions in the presence of
-      null bytes *)
   val string : string -> unit t
 
   val any_string : string t

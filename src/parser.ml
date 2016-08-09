@@ -120,11 +120,6 @@ module Body = struct
   let%test_unit _ = should_not_match fail "$x"
   let%test_unit _ = should_not_match fail "foo\nxyz"
 
-  let fail_if_null where what c =
-    if Char.equal c '\000'
-    then
-      failwithf "Re2.Parser.%s %S: null byte" where what ()
-
   let of_captureless_string regex_string =
     { regex_string = Rope.of_string regex_string
     ; num_submatches = 0
@@ -132,13 +127,15 @@ module Body = struct
     }
 
   let string s =
-    String.iter s ~f:(fail_if_null "string" s);
     of_captureless_string (Re2_internal.escape s)
+
   let%test_unit _ = should_match_unit (string "blah") "bloblahba"
   let%test_unit _ = should_not_match (string ".") "x"
   let%test_unit _ =
     let nasty_string = "^(he+l*l.o)[abc]{{\\\\$" in
     should_match_unit (string nasty_string) ("before" ^ nasty_string ^ "after")
+  let%test_unit _ = should_match_unit (string "blah\000blee") "blah\000blee"
+  let%test_unit _ = should_not_match (string "blah\000nope") "blah\000blee"
 
   let and_capture t =
     { regex_string = Rope.(of_string "(" ^ t.regex_string ^ of_string ")")
@@ -409,20 +406,15 @@ module Body = struct
         let%test_unit _ = matches_pred digit Char.is_digit
         let%test_unit _ = matches_pred alnum Char.is_alphanum
         let%test_unit _ = matches_pred space Char.is_whitespace
-        let%test_unit _ = matches_pred any   (Fn.non (Char.equal '\000'))
+        let%test_unit _ = matches_pred any   (Fn.const true)
       end)
 
-    let char_list_to_regex_string chars =
-      let s = String.of_char_list chars in
-      String.iter s ~f:(fail_if_null "char_list_to_regex_string" s);
-      Re2_internal.escape s
+    let char_list_to_regex_string chars = Re2_internal.escape (String.of_char_list chars)
 
     let one_of = function
       | [] -> fail
       | [x] ->
-        let s = String.of_char x in
-        fail_if_null "one_of" s x;
-        capture_char (string s)
+        capture_char (string (String.of_char x))
       | chars ->
         capture_char (of_captureless_string ("[" ^ char_list_to_regex_string chars ^ "]"))
 
@@ -458,7 +450,8 @@ module Body = struct
 
         let%test_unit _ = should_not_match (not_one_of ['x']) "x"
         let%test_unit _ = should_match_char (not_one_of [']']) "x" 'x'
-        let%test _ = Exn.does_raise (fun () -> not_one_of ['\000'])
+        let%test_unit _ = should_match_char (one_of ['\000']) "\000" '\000'
+        let%test_unit _ = should_match_char (one_of ['a'; '\000'; 'b']) "b" 'b'
         let%test_unit _ =
           let difficult_char = not_one_of ['^'; '['; ']'] in
           let r = both difficult_char difficult_char in
