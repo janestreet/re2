@@ -149,31 +149,21 @@ module Match = struct
   let create ~rex captures ~input = {rex; input; captures; }
 end
 
-module Iterator = struct
-  type t = {
-    input       : string;    (* hold a reference to stave off the Gc *)
-    rex         : regex;
-    mutable pos : int;       (* pos < 0 means match failed *)
-  }
-
-  let create rex ~input = {input; rex; pos = 0 }
-
-  let next_exn ?sub ({rex; pos; input} as t) =
-    if pos < 0 then raise (Regex_match_failed (cre2__pattern rex)) else
-      let n =
-        match sub with
-        | None -> -1
-        | Some (`Index n) -> if n >= 0 then n else 0
-        | Some (`Name _ as name) -> index_of_id_exn rex name
-      in
-      let pos', matches = cre2__iter_next rex pos n input in
-      t.pos <- pos';
-      match matches with
-      | None -> raise (Regex_match_failed (cre2__pattern rex))
-      | Some matches -> Match.create ~rex ~input matches
-  ;;
-
-end
+let to_sequence_exn ?sub t input =
+  let n =
+    match sub with
+    | None -> -1
+    | Some (`Index n) -> if n >= 0 then n else 0
+    | Some (`Name _ as name) -> index_of_id_exn t name
+  in
+  Sequence.unfold ~init:0 ~f:(fun pos ->
+    if pos < 0
+    then None
+    else (
+      let pos, matches = cre2__iter_next t pos n input in
+      Option.map matches ~f:(fun m -> (Match.create ~rex:t ~input m, pos))
+    ))
+;;
 
 let find_all_exn ?(sub=(`Index 0)) t input =
   cre2__find_all t (index_of_id_exn t sub) input
@@ -186,9 +176,13 @@ let find_first_exn ?(sub=(`Index 0)) t input = cre2__find_first t (index_of_id_e
 let find_first ?sub t input = Or_error.try_with (fun () -> find_first_exn ?sub t input)
 
 let find_submatches_exn t input =
-  let it = Iterator.create ~input t in
   let n = num_submatches t in
-  let matches = Iterator.next_exn ~sub:(`Index n) it in
+  let seq = to_sequence_exn ~sub:(`Index n) t input in
+  let matches =
+    match Sequence.next seq with
+    | None -> raise (Regex_match_failed (cre2__pattern t))
+    | Some (m, _) -> m
+  in
   Array.init n ~f:(fun i -> Match.get ~sub:(`Index i) matches)
 
 let find_submatches t input = Or_error.try_with (fun () -> find_submatches_exn t input)
@@ -196,21 +190,13 @@ let find_submatches t input = Or_error.try_with (fun () -> find_submatches_exn t
 let matches t input = cre2__matches t input
 
 let get_matches_exn ?sub ?max t input =
-  let iter = Iterator.create t ~input in
-  match max with
-  | None ->
-    let rec f acc =
-      try f ((Iterator.next_exn ?sub iter)::acc) with
-      | Regex_match_failed _ -> List.rev acc
-      | err -> raise err
-    in f []
-  | Some limit ->
-    let rec f' acc limit =
-      if limit < 1 then List.rev acc else
-        try f' ((Iterator.next_exn ?sub iter)::acc) (limit - 1) with
-        | Regex_match_failed _ -> List.rev acc
-        | err -> raise err
-    in f' [] limit
+  let seq = to_sequence_exn ?sub t input in
+  let seq =
+    match max with
+    | None -> seq
+    | Some limit -> Sequence.take seq limit
+  in
+  Sequence.to_list seq
 ;;
 
 let get_matches ?sub ?max t input =

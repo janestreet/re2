@@ -210,6 +210,12 @@ val get_matches_exn
   -> string
   -> Match.t list
 
+val to_sequence_exn
+  : ?sub:id_t
+  -> t
+  -> string
+  -> Match.t Sequence.t
+
 (** [first_match pattern input] @return the first match iff [pattern] matches [input] *)
 val first_match : t -> string -> Match.t Or_error.t
 val first_match_exn : t -> string -> Match.t
