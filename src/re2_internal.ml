@@ -39,6 +39,12 @@ external cre2__valid_rewrite_template : t -> string -> bool =
   "mlre2__valid_rewrite_template" [@@noalloc]
 external cre2__escape : string -> string = "mlre2__escape"
 
+type regexset
+external cre2__create_set  : Options.enum list -> regexset = "mlre2__create_set"
+external cre2__set_add     : regexset -> string -> int = "mlre2__set_add"
+external cre2__set_compile : regexset -> bool = "mlre2__set_compile"
+external cre2__set_match   : regexset -> string -> int array = "mlre2__set_match"
+
 type regex = t
 
 module Exceptions = struct
@@ -299,6 +305,27 @@ let valid_rewrite_template t ~template = cre2__valid_rewrite_template t template
 
 let escape input = cre2__escape input
 
+module Dict = struct
+  type 'a redict = {
+    set  : regexset ;
+    vals : 'a array ;
+  };;
+
+  let make ?options:(opts=[]) entries =
+    let res = {set  = cre2__create_set (List.map ~f:Options.enum_of_t opts) ;
+	       vals = Array.of_list (List.map ~f:(function (_, v) -> v) entries)} in
+    try
+      List.iter ~f:(function (pat, _) -> ignore (cre2__set_add res.set pat)) entries ;
+      if cre2__set_compile res.set then Some res else None
+    with | _ -> None
+
+  let get_all d s =
+    let results = cre2__set_match d.set s in
+    List.rev (Array.fold ~f:(fun acc -> fun idx -> (d.vals.(idx))::acc)
+	       ~init:[] results)
+
+end
+
 module Infix = struct
   let (~/) pat = create_exn pat
 
@@ -338,6 +365,21 @@ let%test_module _ = (module struct
     let re = create_exn "^" in
     [%test_eq: string] "aXYZ" (replace_exn re "XYZ" ~f:(const "a"))
 
+end)
+
+let%test_module _ = (module struct
+  let%test_unit _ = begin
+    match Dict.make [("^X",   `Starts_X);
+                     ("^Y",   `Starts_Y);
+                     (".*X",  `Contains_X);
+                     (".*Y",  `Contains_Y);
+                     (".*X$", `Ends_X);
+                     (".*Y$", `Ends_Y)] with
+    | Some d -> [%test_eq: [ `Starts_X | `Starts_Y | `Contains_X | `Contains_Y | `Ends_X | `Ends_Y] list]
+                    [] (List.filter (fun x -> not (List.mem x [`Starts_X; `Contains_X; `Contains_Y; `Ends_Y]))
+		    (Dict.get_all d "XY")
+    | _      -> failwith "failed to compile dictionary"
+  end
 end)
 
 let%bench_fun "find_submatches with many Nones" [@indexed n = [5;10;50;100;200]] =

@@ -82,6 +82,12 @@ extern "C" {
 
   extern value mlre2__escape(value _str);
 
+
+  extern value mlre2__create_set(value v_options);
+  extern value mlre2__set_add(value v_set, value v_pattern);
+  extern value mlre2__set_compile(value v_set);
+  extern value mlre2__set_match(value v_set, value v_str);
+
   /** a thin wrapper around RE2::QuoteMeta */
 } /* extern "C" */
 

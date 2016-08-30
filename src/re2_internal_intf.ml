@@ -260,4 +260,18 @@ module Exceptions : sig
   exception Regex_rewrite_template_invalid of string * string
 end
 
+module Dict : sig
+  (** Regular expression dictionary mapping patterns to a record type *)
+  type 'a redict
+             
+  (** Construct a dictionary from the given association list. Compile
+      the strings as regular expressions using the provided options. *)
+  val make : ?options:Options.t list -> (string * 'a) list -> 'a redict option
+
+  (** Retrieve all records associated with a pattern matching the
+      provided input string. Records are returned in an unspecified
+      order *)
+  val get_all : 'a redict -> string -> 'a list
+end
+
 end
