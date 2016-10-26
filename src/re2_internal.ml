@@ -85,10 +85,6 @@ let create ?options pat = Or_error.try_with (fun () -> create_exn ?options pat)
 
 let num_submatches t          = cre2__num_submatches t
 let pattern t                 = cre2__pattern t
-(*let submatch_index_exn t name =
-  let i = cre2__submatch_index t name in
-  if i < 0 then raise (Regex_no_such_named_subpattern (name, pattern t)) else i
-let submatch_index t name     = Or_error.try_with (fun () -> submatch_index_exn t name)*)
 
 let of_string pat = create_exn pat
 let to_string t   = cre2__pattern t
@@ -110,7 +106,9 @@ let index_of_id_exn t = function
   | `Index i ->
     let max = num_submatches t in
     if i <= max then i else raise (Regex_no_such_subpattern (i, max))
-  | `Name name -> cre2__submatch_index t name
+  | `Name name ->
+    let i = cre2__submatch_index t name in
+    if i < 0 then raise (Regex_no_such_named_subpattern (name, pattern t)) else i
 ;;
 
 module Match = struct
