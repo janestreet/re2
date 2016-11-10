@@ -265,7 +265,7 @@ extern "C" {
   }
 
   CAMLprim value mlre2__submatch_index(value v_regex, value v_name) {
-    map<string, int>::const_iterator it =
+    std::map<string, int>::const_iterator it =
       Regex_val(v_regex)->NamedCapturingGroups().find(String_val(v_name));
     if (it == Regex_val(v_regex)->NamedCapturingGroups().end()) {
       return Val_int(-1);
