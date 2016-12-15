@@ -105,10 +105,14 @@ type id_t = [ `Index of int | `Name of string ]
 let index_of_id_exn t = function
   | `Index i ->
     let max = num_submatches t in
-    if i <= max then i else raise (Regex_no_such_subpattern (i, max))
+    if i < 0 || i > max
+    then raise (Regex_no_such_subpattern (i, max))
+    else i
   | `Name name ->
     let i = cre2__submatch_index t name in
-    if i < 0 then raise (Regex_no_such_named_subpattern (name, pattern t)) else i
+    if i < 0 || i > num_submatches t
+    then raise (Regex_no_such_named_subpattern (name, pattern t))
+    else i
 ;;
 
 module Match = struct

@@ -1,6 +1,6 @@
 #include <vector>
 #include "re2/re2.h"
-//#define DEBUG
+// #define DEBUG
 #ifdef DEBUG
 #include <iostream>
 #endif
@@ -191,7 +191,7 @@ extern "C" {
     CAMLparam1(v_sub);
     CAMLlocalN(error_args, 2);
 
-    if (re->NumberOfCapturingGroups() < Int_val(v_sub)) {
+    if (Int_val(v_sub) < 0 || re->NumberOfCapturingGroups() < Int_val(v_sub)) {
       error_args[0] = v_sub;
       error_args[1] = Val_int(re->NumberOfCapturingGroups() + 1);
       caml_raise_with_args(*caml_named_value("mlre2__Regex_no_such_subpattern"),

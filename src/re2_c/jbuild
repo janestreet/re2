@@ -1,0 +1,30 @@
+;; This library only packages the upstream libre2 library. We put in a
+;; separate library rather than putting in re2 directly to avoid
+;; having to merge the .a and .so for libre2 and for the stubs of re2,
+;; which is hard to do in a portable way
+
+(library
+ ((name        re2_c)
+  (public_name re2.c)
+  (preprocess no_preprocessing)
+  (self_build_stubs_archive (re2_c))))
+
+;; We overapproximate the dependency of running make by depending on everything
+;; in libre2. It doesn't seem to cause any issue that files in libre2/obj are actually
+;; targets.  And even in theory, we should re-run make at most twice per change: once
+;; when the source files change, and again when that changes the obj files.
+;; 'make' doesn't rebuild in case of variable update (CXX, CXXFLAGS) so
+;; we call 'make clean' first.
+(rule
+ ((targets (libre2_c_stubs.a dllre2_c_stubs.so))
+  (deps ((files_recursively_in libre2)))
+  (action "
+${MAKE} -s -C libre2 clean
+${MAKE} -s -C libre2 \
+  CXX=\"${CXX}\" \
+  CXXFLAGS=\"-Wall -Wno-uninitialized -O3 -g -pthread -fPIC\" \
+  obj/libre2.a obj/so/libre2.so
+cp libre2/obj/libre2.a libre2_c_stubs.a
+cp libre2/obj/so/libre2.so dllre2_c_stubs.so
+")))
+
