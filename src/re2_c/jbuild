@@ -21,8 +21,6 @@
   (action "
 ${MAKE} -s -C libre2 clean
 ${MAKE} -s -C libre2 \
-  CXX=\"${CXX}\" \
-  CXXFLAGS=\"-Wall -Wno-uninitialized -O3 -g -pthread -fPIC\" \
   obj/libre2.a obj/so/libre2.so
 cp libre2/obj/libre2.a libre2_c_stubs.a
 cp libre2/obj/so/libre2.so dllre2_c_stubs.so
