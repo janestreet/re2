@@ -10,19 +10,22 @@
   (self_build_stubs_archive (re2_c))))
 
 ;; We overapproximate the dependency of running make by depending on everything
-;; in libre2. It doesn't seem to cause any issue that files in libre2/obj are actually
-;; targets.  And even in theory, we should re-run make at most twice per change: once
-;; when the source files change, and again when that changes the obj files.
+;; in libre2 except for [obj] so we don't retrigger itself (obj contains build targets).
+;; [obj] is excluded from dependencies by listing it in jbuild-ignore, sadly not the most
+;; direct mechanism. The same mechanism also makes sure jenga doesn't delete the contents
+;; of [obj] by stale artifacts removal.
 ;; 'make' doesn't rebuild in case of variable update (CXX, CXXFLAGS) so
 ;; we call 'make clean' first.
 (rule
  ((targets (libre2_c_stubs.a dllre2_c_stubs.so))
   (deps ((files_recursively_in libre2)))
+  (sandbox ignore_targets)
   (action "
 ${MAKE} -s -C libre2 clean
 ${MAKE} -s -C libre2 \
   obj/libre2.a obj/so/libre2.so
 cp libre2/obj/libre2.a libre2_c_stubs.a
 cp libre2/obj/so/libre2.so dllre2_c_stubs.so
+${MAKE} -s -C libre2 clean
 ")))
 
