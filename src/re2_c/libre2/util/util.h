@@ -94,7 +94,7 @@ typedef unsigned short ushort;
 #else
 template<bool> struct CompileAssert {};
 #define COMPILE_ASSERT(expr, msg) \
-  typedef CompileAssert<(bool(expr))> msg[bool(expr) ? 1 : -1]
+  typedef CompileAssert<(bool(expr))> __attribute__((unused)) msg[bool(expr) ? 1 : -1]
 #endif
 
 // DISALLOW_COPY_AND_ASSIGN disallows the copy and operator= functions.
