@@ -11,3 +11,5 @@
 module Parser = Parser
 module Re2 = Re2_internal
 
+(* Required for jane-script auto-loading *)
+let () = Re2_c.linkme

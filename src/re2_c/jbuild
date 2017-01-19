@@ -7,6 +7,7 @@
  ((name        re2_c)
   (public_name re2.c)
   (preprocess no_preprocessing)
+  (c_libraries (stdc++ pthread))
   (self_build_stubs_archive (re2_c))))
 
 ;; We overapproximate the dependency of running make by depending on everything
