@@ -5,7 +5,7 @@
     that make it more efficient to drop down into C directly.
 *)
 
-open Core_kernel.Std
+open Core_kernel
 
 type t
 
