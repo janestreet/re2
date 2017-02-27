@@ -11,3 +11,5 @@
   (includes (re2_c/libre2))
   (cxx_names (stubs))
   (cxx_flags (:standard \ -pedantic))))
+
+(jbuild_version jane_street)

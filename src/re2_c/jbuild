@@ -46,3 +46,5 @@ cp libre2/obj/so/libre2.so dllre2_c_stubs.so
 ${MAKE} -s -C libre2 clean
 ")))
 
+
+(jbuild_version jane_street)

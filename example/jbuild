@@ -3,3 +3,5 @@
   (libraries (core_kernel
               re2))
   (preprocess (pps ()))))
+
+(jbuild_version jane_street)
