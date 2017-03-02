@@ -7,9 +7,10 @@
  ((name re2)
   (public_name re2)
   (libraries (core_kernel re2_c))
-  (c_libraries (stdc++ pthread))
+  (c_library_flags (:standard -lstdc++ -lpthread))
   (includes (re2_c/libre2))
   (cxx_names (stubs))
-  (cxx_flags (:standard \ -pedantic))))
+  (cxx_flags (:standard \ -pedantic))
+  (preprocess (pps (ppx_jane)))))
 
 (jbuild_version jane_street)

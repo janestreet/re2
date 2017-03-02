@@ -7,7 +7,7 @@
  ((name        re2_c)
   (public_name re2.c)
   (preprocess no_preprocessing)
-  (c_libraries (stdc++ pthread))
+  (c_library_flags (:standard -lstdc++ -lpthread))
   (self_build_stubs_archive (re2_c))))
 
 ;; We overapproximate the dependency of running make by depending on everything
@@ -20,20 +20,12 @@
 (rule
  ((targets (libre2_c_stubs.a dllre2_c_stubs.so))
   (deps ((files_recursively_in libre2)))
-  (sandbox ignore_targets)
   (action "
-INSIDE_JANE_STREET=false
-if $INSIDE_JANE_STREET; then
-  ARFLAGS=Drsc
-  CXX=\"${CXX}\"
-  CXXFLAGS=\"-Wall -Wno-uninitialized -O3 -g -pthread -fPIC\"
-else
-  ARFLAGS=rsc
-  CXX=g++
-  CXXFLAGS=\"-Wall -O3 -g -pthread\"
-  if ! ${ARCH_SIXTYFOUR}; then
-    CXX=\"$CXX -m32\"
-  fi
+ARFLAGS=rsc
+CXX=g++
+CXXFLAGS=\"-Wall -O3 -g -pthread\"
+if ! ${ARCH_SIXTYFOUR}; then
+  CXX=\"$CXX -m32\"
 fi
 ${MAKE} -s -C libre2 clean
 ${MAKE} -s -C libre2 \
@@ -45,6 +37,5 @@ cp libre2/obj/libre2.a libre2_c_stubs.a
 cp libre2/obj/so/libre2.so dllre2_c_stubs.so
 ${MAKE} -s -C libre2 clean
 ")))
-
 
 (jbuild_version jane_street)
