@@ -1,7 +1,7 @@
 (rule
  ((targets (options.ml))
   (deps (options.mlp enum_x_macro.h))
-  (action "${CPP} -x c options.mlp > options.ml")))
+  (action (bash "${CPP} -x c options.mlp > options.ml"))))
 
 (library
  ((name re2)
