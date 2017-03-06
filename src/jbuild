@@ -11,6 +11,6 @@
   (includes (re2_c/libre2))
   (cxx_names (stubs))
   (cxx_flags (:standard \ -pedantic))
-  (preprocess (pps (ppx_jane)))))
+  (preprocess (pps (ppx_jane ppx_driver.runner)))))
 
 (jbuild_version jane_street)
