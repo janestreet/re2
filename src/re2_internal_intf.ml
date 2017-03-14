@@ -266,7 +266,8 @@ module Dict : sig
              
   (** Construct a dictionary from the given association list. Compile
       the strings as regular expressions using the provided options. *)
-  val make : ?options:Options.t list -> (string * 'a) list -> 'a redict option
+  val make : ?options:Options.t list -> (string * 'a) list -> 'a redict Or_error.t
+  val make_exn : ?options:Options.t list -> (string * 'a) list -> 'a redict
 
   (** Retrieve all records associated with a pattern matching the
       provided input string. Records are returned in an unspecified

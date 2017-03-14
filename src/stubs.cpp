@@ -458,10 +458,11 @@ extern "C" {
 
 
   CAMLprim value mlre2__create_set(value v_options) {
-    value v_retval;
+    CAMLparam1(v_options);
+    CAMLlocal1(v_retval);
+    
     RE2::Options opt;
     RE2::Set* set = NULL;
-
     opt.Copy(RE2::Quiet);
     while (v_options != Val_emptylist) {
       int val = Int_val(Field(Field(v_options, 0), 0));
@@ -484,35 +485,50 @@ extern "C" {
 
     RegexSet_val(v_retval) = set;
 
-    return v_retval;
+    CAMLreturn(v_retval);
   }
 
   CAMLprim value mlre2__set_add(value v_set, value v_pattern){
-      char *pattern_str = String_val(v_pattern);
-      RE2::Set* set = RegexSet_val(v_set);
-      string errstr;
-      int idx = set->Add(pattern_str, &errstr);
-      if(idx < 0){
-	  caml_failwith(errstr.c_str());
-      }
-      return Val_int(idx);
+    CAMLparam2(v_set, v_pattern);
+    CAMLlocal1(v_compile_error);
+    
+    char *pattern_str = String_val(v_pattern);
+    RE2::Set* set = RegexSet_val(v_set);
+    string errstr;
+    int idx = set->Add(pattern_str, &errstr);
+    if(idx < 0){
+      v_compile_error = caml_copy_string(errstr.c_str());
+      caml_raise_with_arg(*caml_named_value("mlre2__Regex_compile_failed"),
+			  v_compile_error);
+    }
+    CAMLreturn(Val_int(idx));
   }
 
   CAMLprim value mlre2__set_compile(value v_set){
-      RE2::Set *set = RegexSet_val(v_set);
-      return set->Compile() ? Val_true : Val_false;
+    CAMLparam1(v_set);
+    CAMLlocal1(v_compile_error);
+    RE2::Set *set = RegexSet_val(v_set);
+    if(!set->Compile()){
+      v_compile_error = caml_copy_string("Unknown failure compiling Regex Set");
+      caml_raise_with_arg(*caml_named_value("mlre2__Regex_compile_failed"),
+			  v_compile_error);
+    }
+    CAMLreturn(Val_unit);
   }
 
   CAMLprim value mlre2__set_match(value v_set, value v_str){
+    CAMLparam2(v_set, v_str);
+    CAMLlocal1(res);
     char *str = String_val(v_str);
     RE2::Set *set = RegexSet_val(v_set);
     std::vector<int> matchV;
-    bool matches = set->Match(str, &matchV);
-    value res = caml_alloc_tuple(matchV.size());
-    for(int i = 0; i < matchV.size(); ++i){
+
+    set->Match(str, &matchV);
+    res = caml_alloc_tuple(matchV.size());
+    for(unsigned int i = 0; i < matchV.size(); ++i){
       Store_field(res, i, Val_int(matchV[i]));
     }
-    return res;
+    CAMLreturn(res);
   }
 
 } /* extern "C" */
