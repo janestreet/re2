@@ -99,6 +99,8 @@ include Binable. Of_stringable (T)
 include Sexpable.Of_stringable (T)
 
 let compare t1 t2 = String.compare (to_string t1) (to_string t2)
+let hash t = String.hash (to_string t)
+let hash_fold_t s t = String.hash_fold_t s (to_string t)
 
 type id_t = [ `Index of int | `Name of string ]
 

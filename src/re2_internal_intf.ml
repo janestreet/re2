@@ -29,7 +29,7 @@ module type S = sig
 
 (** {6 Basic Types} *)
 
-type t [@@deriving bin_io, compare, sexp]
+type t [@@deriving bin_io, compare, sexp, hash]
 type regex = t
 
 (** Subpatterns are referenced by name if labelled with the /(?P<...>...)/ syntax, or else
