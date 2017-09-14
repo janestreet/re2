@@ -468,8 +468,15 @@ module Body = struct
           | None | Some '+' -> 1
           | Some '-' -> -1
           | Some c -> failwiths "matched unexpected character" c [%sexp_of: char])
-    let unsigned = map (capture (repeat Char.digit)) ~f:Int.of_string
+    let unsigned = map (capture (repeat ~min:1 Char.digit)) ~f:Int.of_string
     let int = map2 sign unsigned ~f:( * )
+
+    let%test_unit "Parsing an empty string shouldn't raise" =
+      run int "" |> Core_kernel.ignore
+    let%test_unit _ = should_not_match int ""
+    let%test_unit _ = should_match Int.sexp_of_t int "-10" (-10)
+    let%test_unit _ = should_match Int.sexp_of_t int "+005" 5
+    let%test_unit _ = should_match Int.sexp_of_t int "42" 42
   end
 
   let any_string = capture (repeat (ignore Char.any))
