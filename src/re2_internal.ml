@@ -39,6 +39,12 @@ external cre2__valid_rewrite_template : t -> string -> bool =
   "mlre2__valid_rewrite_template" [@@noalloc]
 external cre2__escape : string -> string = "mlre2__escape"
 
+type regexset
+external cre2__create_set  : Options.enum list -> regexset = "mlre2__create_set"
+external cre2__set_add     : regexset -> string -> int = "mlre2__set_add"
+external cre2__set_compile : regexset -> unit = "mlre2__set_compile"
+external cre2__set_match   : regexset -> string -> int array = "mlre2__set_match"
+
 type regex = t
 
 module Exceptions = struct
@@ -301,6 +307,29 @@ let valid_rewrite_template t ~template = cre2__valid_rewrite_template t template
 
 let escape input = cre2__escape input
 
+module Dict = struct
+  type 'a redict = {
+    set  : regexset ;
+    vals : 'a array ;
+  };;
+
+  let make_exn ?options:(opts=[]) entries =
+    let res = {set  = cre2__create_set (List.map ~f:Options.enum_of_t opts) ;
+	       vals = Array.of_list (List.map ~f:(function (_, v) -> v) entries)} in
+    List.iter ~f:(function (pat, _) -> ignore (cre2__set_add res.set pat)) entries ;
+    cre2__set_compile res.set;
+    res
+      
+  let make ?options:(opts=[]) entries =
+    Or_error.try_with (fun () -> make_exn ~options:opts entries)
+      
+  let get_all d s =
+    let results = cre2__set_match d.set s in
+    Array.fold ~f:(fun acc -> fun idx -> (d.vals.(idx))::acc)
+      ~init:[] results
+
+end
+
 module Infix = struct
   let (~/) pat = create_exn pat
 
@@ -340,6 +369,53 @@ let%test_module _ = (module struct
     let re = create_exn "^" in
     [%test_eq: string] "aXYZ" (replace_exn re "XYZ" ~f:(const "a"))
 
+end)
+
+let%test_module _ = (module struct
+    let%test_unit _ = begin
+      let d = Dict.make_exn [("^X",   `Starts_X);
+                             ("^Y",   `Starts_Y);
+                             (".*X",  `Contains_X);
+                             (".*Y",  `Contains_Y);
+                             (".*X$", `Ends_X);
+                             (".*Y$", `Ends_Y)] in
+      let ms = Dict.get_all d "XY" in
+      if (List.length ms = 4 &&
+          List.mem ~equal:(=) ms `Starts_X &&
+          List.mem ~equal:(=) ms `Contains_X &&
+          List.mem ~equal:(=) ms `Contains_Y &&
+          List.mem ~equal:(=) ms `Ends_Y)
+      then ()
+      else failwith "Bad return from Dict.get_all"
+    end
+
+    let%test_unit _ = begin
+      let d = Dict.make_exn [("^X",   `Starts_X);
+                             ("^Y",   `Starts_Y);
+                             (".*X",  `Contains_X);
+                             (".*Y",  `Contains_Y);
+                             (".*X$", `Ends_X);
+                             (".*Y$", `Ends_Y)] in
+          [%test_eq: [ `Starts_X | `Starts_Y | `Contains_X | `Contains_Y | `Ends_X | `Ends_Y] list]
+          [] (Dict.get_all d "ZZ")
+    end
+    
+    let%test_unit _ = begin
+      let d = Dict.make_exn [] in
+      [%test_eq: [`Empty] list] [] (Dict.get_all d "XY")
+    end
+
+    let%test _ = begin
+      let d = Dict.make_exn [("^X", `Starts_X); ("^X", `Starts_X_dup)] in
+      let ms = Dict.get_all d "XX" in
+      (List.mem ~equal:(=) ms `Starts_X && 
+       List.mem ~equal:(=) ms `Starts_X_dup &&
+       (List.length ms) = 2)
+    end
+
+    let%test _ = begin
+      try ignore (Dict.make_exn [("(", `Invalid)]) ; false with _ -> true
+    end
 end)
 
 let%bench_fun "find_submatches with many Nones" [@indexed n = [5;10;50;100;200]] =

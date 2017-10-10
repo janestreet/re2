@@ -1,6 +1,7 @@
 #include <vector>
 #include "re2/re2.h"
-// #define DEBUG
+#include "re2/set.h"
+//#define DEBUG
 #ifdef DEBUG
 #include <iostream>
 #endif
@@ -155,9 +156,25 @@ extern "C" {
 #endif
   };
 
+  void mlre2__custom_regex_set_finalize(value v_obj) {
+    delete RegexSet_val(v_obj);
+  }
+
+  struct custom_operations mlre2__custom_regex_set_ops = {
+    (char *)"com.janestreet.re2-ocaml.regex-set-v20Mar2014",
+    mlre2__custom_regex_set_finalize,
+    custom_compare_default,
+    custom_hash_default,
+    custom_serialize_default,
+    custom_deserialize_default,
+#ifdef custom_compare_ext_default
+    custom_compare_ext_default
+#endif
+  };
 
   CAMLprim void mlre2__init(void) {
     caml_register_custom_operations(&mlre2__custom_regex_ops);
+    caml_register_custom_operations(&mlre2__custom_regex_set_ops);
   }
 
   static int new_pos(const char *input, StringPiece &remaining, int startpos, StringPiece &match) {
@@ -438,4 +455,80 @@ extern "C" {
     StringPiece str(String_val(v_str), caml_string_length(v_str));
     CAMLreturn(caml_copy_string(RE2::QuoteMeta(str).c_str()));
   }
+
+
+  CAMLprim value mlre2__create_set(value v_options) {
+    CAMLparam1(v_options);
+    CAMLlocal1(v_retval);
+    
+    RE2::Options opt;
+    RE2::Set* set = NULL;
+    opt.Copy(RE2::Quiet);
+    while (v_options != Val_emptylist) {
+      int val = Int_val(Field(Field(v_options, 0), 0));
+      switch (Tag_val(Field(v_options, 0))) {
+#define X(_u,FIRST,REST,_uu) case FIRST##REST : opt.set_##FIRST##REST(val); break;
+#define X__ENCODING(_u,FIRST,REST,_uu,SUFFIX,_uuu,TRANSLATED)               \
+        case FIRST##REST##SUFFIX : opt.set_##FIRST##REST(val TRANSLATED); break;
+#define X__MAXMEM(_u,FIRST,REST,_uu) X(_u,FIRST,REST,_uu)
+#include "enum_x_macro.h"
+      default              : caml_invalid_argument("invalid option\n");
+      }
+      v_options = Field(v_options, 1);
+    }
+
+    set = new RE2::Set(opt, RE2::UNANCHORED);
+
+    v_retval = caml_alloc_custom(&mlre2__custom_regex_set_ops, sizeof(set),
+        1024*1024,      /* RE2 object uses ~1MB of memory outside the OCaml heap */
+        500*1024*1024);  /* I'm okay with 500MB of RAM being wasted */
+
+    RegexSet_val(v_retval) = set;
+
+    CAMLreturn(v_retval);
+  }
+
+  CAMLprim value mlre2__set_add(value v_set, value v_pattern){
+    CAMLparam2(v_set, v_pattern);
+    CAMLlocal1(v_compile_error);
+    
+    char *pattern_str = String_val(v_pattern);
+    RE2::Set* set = RegexSet_val(v_set);
+    string errstr;
+    int idx = set->Add(pattern_str, &errstr);
+    if(idx < 0){
+      v_compile_error = caml_copy_string(errstr.c_str());
+      caml_raise_with_arg(*caml_named_value("mlre2__Regex_compile_failed"),
+			  v_compile_error);
+    }
+    CAMLreturn(Val_int(idx));
+  }
+
+  CAMLprim value mlre2__set_compile(value v_set){
+    CAMLparam1(v_set);
+    CAMLlocal1(v_compile_error);
+    RE2::Set *set = RegexSet_val(v_set);
+    if(!set->Compile()){
+      v_compile_error = caml_copy_string("Unknown failure compiling Regex Set");
+      caml_raise_with_arg(*caml_named_value("mlre2__Regex_compile_failed"),
+			  v_compile_error);
+    }
+    CAMLreturn(Val_unit);
+  }
+
+  CAMLprim value mlre2__set_match(value v_set, value v_str){
+    CAMLparam2(v_set, v_str);
+    CAMLlocal1(res);
+    char *str = String_val(v_str);
+    RE2::Set *set = RegexSet_val(v_set);
+    std::vector<int> matchV;
+
+    set->Match(str, &matchV);
+    res = caml_alloc_tuple(matchV.size());
+    for(unsigned int i = 0; i < matchV.size(); ++i){
+      Store_field(res, i, Val_int(matchV[i]));
+    }
+    CAMLreturn(res);
+  }
+
 } /* extern "C" */
