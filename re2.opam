@@ -1,5 +1,5 @@
 opam-version: "1.2"
-version: "v0.9.0"
+version: "v0.9.1"
 maintainer: "opensource@janestreet.com"
 authors: ["Jane Street Group, LLC <opensource@janestreet.com>"]
 homepage: "https://github.com/janestreet/re2"
@@ -11,8 +11,8 @@ build: [
 ]
 depends: [
   "core_kernel"             {>= "v0.9" & < "v0.10"}
-  "jbuilder"                {build & >= "1.0+beta2"}
-  "ppx_driver"              {>= "v0.9" & < "v0.10"}
+  "jbuilder"                {build & >= "1.0+beta15"}
+  "ppx_driver"              {>= "v0.9.2" & < "v0.10"}
   "ppx_jane"                {>= "v0.9" & < "v0.10"}
   "ocaml-migrate-parsetree" {>= "0.4"}
 ]

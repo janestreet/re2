@@ -7,6 +7,7 @@
  ((name        re2_c)
   (public_name re2.c)
   (preprocess no_preprocessing)
+  (flags (:standard -unsafe-string))
   (c_library_flags (:standard -lstdc++ -lpthread))
   (self_build_stubs_archive (re2_c))))
 

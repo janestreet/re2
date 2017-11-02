@@ -7,6 +7,7 @@
  ((name re2)
   (public_name re2)
   (libraries (core_kernel re2_c))
+  (flags (:standard -unsafe-string))
   (c_library_flags (:standard -lstdc++ -lpthread))
   (cxx_names (stubs))
   (cxx_flags ((:standard "\\" -pedantic) (-I re2_c/libre2)))
