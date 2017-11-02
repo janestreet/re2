@@ -1,6 +1,7 @@
 #include <vector>
 #include "re2/re2.h"
-// #define DEBUG
+#include "re2/set.h"
+//#define DEBUG
 #ifdef DEBUG
 #include <iostream>
 #endif
@@ -143,6 +144,9 @@ extern "C" {
     return sizeof(RE2 *);
   }
 
+  /* 2017-04-01: It was a mistake to implement marshal. We don't use marshal
+     internally, and will not add additional marshal support in the future. */
+
   struct custom_operations mlre2__custom_regex_ops = {
     (char *)"com.janestreet.re2-ocaml.regex-v20Mar2014",
     mlre2__custom_regex_finalize,
@@ -155,9 +159,25 @@ extern "C" {
 #endif
   };
 
+  void mlre2__custom_regex_multiple_finalize(value v_obj) {
+    delete RegexSet_val(v_obj);
+  }
+
+  struct custom_operations mlre2__custom_regex_multiple_ops = {
+    (char *)"com.janestreet.re2-ocaml.regex-set-v31Mar2017",
+    mlre2__custom_regex_multiple_finalize,
+    custom_compare_default,
+    custom_hash_default,
+    custom_serialize_default,
+    custom_deserialize_default,
+#ifdef custom_compare_ext_default
+    custom_compare_ext_default
+#endif
+  };
 
   CAMLprim void mlre2__init(void) {
     caml_register_custom_operations(&mlre2__custom_regex_ops);
+    caml_register_custom_operations(&mlre2__custom_regex_multiple_ops);
   }
 
   static int new_pos(const char *input, StringPiece &remaining, int startpos, StringPiece &match) {
@@ -210,17 +230,7 @@ extern "C" {
 #include "enum_x_macro.h"
   };
 
-  /* returns (cre2__obj_t * int * (string * int) list) where
-   * - cre2__obj_t is the ML-side name for a custom_block with a struct regex *
-   * - int is the number of submatches, including the whole match
-   * - (string * int) list is the Map.to_alist of the submatch (name, index) Map.t
-   */
-  CAMLprim value mlre2__create_re(value v_options, value v_pattern) {
-    value v_retval, v_compile_error;
-    const char * c_pat = String_val(v_pattern);
-    RE2::Options opt;
-    RE2* compiled = NULL;
-
+  static void set_options(RE2::Options &opt, value v_options) {
     opt.Copy(RE2::Quiet);
     while (v_options != Val_emptylist) {
       int val = Int_val(Field(Field(v_options, 0), 0));
@@ -234,6 +244,20 @@ extern "C" {
       }
       v_options = Field(v_options, 1);
     }
+  }
+
+  /* returns (cre2__obj_t * int * (string * int) list) where
+   * - cre2__obj_t is the ML-side name for a custom_block with a struct regex *
+   * - int is the number of submatches, including the whole match
+   * - (string * int) list is the Map.to_alist of the submatch (name, index) Map.t
+   */
+  CAMLprim value mlre2__create_re(value v_options, value v_pattern) {
+    value v_retval, v_compile_error;
+    const char * c_pat = String_val(v_pattern);
+    RE2::Options opt;
+    RE2* compiled = NULL;
+
+    set_options(opt, v_options);
 
     compiled = new RE2(c_pat, opt);
 
@@ -438,4 +462,69 @@ extern "C" {
     StringPiece str(String_val(v_str), caml_string_length(v_str));
     CAMLreturn(caml_copy_string(RE2::QuoteMeta(str).c_str()));
   }
+
+
+  CAMLprim value mlre2__multiple_create(value v_options) {
+    CAMLparam1(v_options);
+    CAMLlocal1(v_retval);
+
+    RE2::Options opt;
+    RE2::Set* set = NULL;
+
+    set_options(opt, v_options);
+
+    set = new RE2::Set(opt, RE2::UNANCHORED);
+
+    v_retval = caml_alloc_custom(&mlre2__custom_regex_multiple_ops, sizeof(set),
+        1024*1024,      /* RE2 object uses ~1MB of memory outside the OCaml heap */
+        500*1024*1024);  /* I'm okay with 500MB of RAM being wasted */
+
+    RegexSet_val(v_retval) = set;
+
+    CAMLreturn(v_retval);
+  }
+
+  CAMLprim value mlre2__multiple_add(value v_multiple, value v_pattern){
+    CAMLparam2(v_multiple, v_pattern);
+    CAMLlocal1(v_compile_error);
+
+    char *pattern_str = String_val(v_pattern);
+    RE2::Set* set = RegexSet_val(v_multiple);
+    string errstr;
+    int idx = set->Add(pattern_str, &errstr);
+    if(idx < 0){
+      v_compile_error = caml_copy_string(errstr.c_str());
+      caml_raise_with_arg(*caml_named_value("mlre2__Regex_compile_failed"),
+			  v_compile_error);
+    }
+    CAMLreturn(Val_int(idx));
+  }
+
+  CAMLprim value mlre2__multiple_compile(value v_multiple){
+    CAMLparam1(v_multiple);
+    CAMLlocal1(v_compile_error);
+    RE2::Set *set = RegexSet_val(v_multiple);
+    if(!set->Compile()){
+      v_compile_error = caml_copy_string("Unknown failure compiling Regex Set");
+      caml_raise_with_arg(*caml_named_value("mlre2__Regex_compile_failed"),
+			  v_compile_error);
+    }
+    CAMLreturn(Val_unit);
+  }
+
+  CAMLprim value mlre2__multiple_match(value v_multiple, value v_str){
+    CAMLparam2(v_multiple, v_str);
+    CAMLlocal1(res);
+    char *str = String_val(v_str);
+    RE2::Set *set = RegexSet_val(v_multiple);
+    std::vector<int> matches;
+
+    set->Match(str, &matches);
+    res = caml_alloc_tuple(matches.size());
+    for(unsigned int i = 0; i < matches.size(); ++i){
+      Store_field(res, i, Val_int(matches[i]));
+    }
+    CAMLreturn(res);
+  }
+
 } /* extern "C" */

@@ -81,8 +81,15 @@ extern "C" {
    */
 
   extern value mlre2__escape(value _str);
-
   /** a thin wrapper around RE2::QuoteMeta */
+
+  extern value mlre2__multiple_create(value v_options);
+  extern value mlre2__multiple_add(value v_multiple, value v_pattern);
+  extern value mlre2__multiple_compile(value v_multiple);
+  extern value mlre2__multiple_match(value v_multiple, value v_str);
+  /** These are thin wrappers around the similarly named RE2::Set methods. The naming is
+      to avoid conflicts with [Set] on the OCaml side. */
+
 } /* extern "C" */
 
 #endif /* MLRE2_STUBS_H */

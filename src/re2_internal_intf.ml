@@ -18,10 +18,10 @@ module type S = sig
     Syntax reference: https://github.com/google/re2/wiki/Syntax
  **)
 
-(** Although OCaml strings may legally have internal null bytes, it is expensive to check
-    for them, so this library just assumes that it will never see such a string.  The
-    failure mode is the search stops early, which isn't bad considering how rare internal
-    null bytes are in practice.
+(** Although OCaml strings and C++ strings may legally have internal null bytes, this
+    library doesn't handle them correctly by doing conversions via C strings.
+    The failure mode is the search stops early, which isn't bad considering how rare
+    internal null bytes are in practice.
 
     The strings are considered in UTF-8 encoding by default or in
     ISO 8859-1 if [Options.latin1] is used.
@@ -258,6 +258,22 @@ module Exceptions : sig
   exception Regex_compile_failed of string
   (** [Regex_rewrite_template_invalid (template, error_msg)] *)
   exception Regex_rewrite_template_invalid of string * string
+end
+
+module Multiple : sig
+  (** An efficient way to ask which of several regexes matches a string. *)
+  type 'a t
+
+  (** [create ?options [ (pattern1, value1); (pattern2, value2); ...]] associates each
+      [pattern] with its [value]. The same [options] are used for all patterns. *)
+  val create     : ?options:Options.t list -> (string * 'a) list -> 'a t Or_error.t
+  val create_exn : ?options:Options.t list -> (string * 'a) list -> 'a t
+
+  (** [matches t input] returns the values associated with those patterns that match the
+      [input]. Values are in the order that [create] saw them. *)
+  val matches : 'a t -> string -> 'a list
+  (** Like [matches], but values are listed in unspecified order. *)
+  val matches_no_order : 'a t -> string -> 'a list
 end
 
 end

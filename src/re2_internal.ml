@@ -39,6 +39,12 @@ external cre2__valid_rewrite_template : t -> string -> bool =
   "mlre2__valid_rewrite_template" [@@noalloc]
 external cre2__escape : string -> string = "mlre2__escape"
 
+type multiple
+external cre2__multiple_create  : Options.enum list -> multiple   = "mlre2__multiple_create"
+external cre2__multiple_add     : multiple -> string -> int       = "mlre2__multiple_add"
+external cre2__multiple_compile : multiple -> unit                = "mlre2__multiple_compile"
+external cre2__multiple_match   : multiple -> string -> int array = "mlre2__multiple_match"
+
 type regex = t
 
 module Exceptions = struct
@@ -224,9 +230,9 @@ module Substring = struct
   let of_string src = {src; src_pos = 0; len = String.length src}
 
   let concat_string ~len substrings : string =
-    let dst = String.create len in
+    let dst = Bytes.create len in
     ignore (List.fold_left substrings ~init:0 ~f:(fun dst_pos {src; src_pos; len} ->
-      String.blit ~src ~src_pos ~dst ~dst_pos ~len;
+      Bytes.blit ~src ~src_pos ~dst ~dst_pos ~len;
       dst_pos + len) : int);
     dst
   ;;
@@ -236,8 +242,8 @@ end
 module Return = struct
   let substrings str (pos, len) = Substring.create ~pos ~len str
   let strings src (src_pos, len) =
-    let dst = String.create len in
-    String.blit ~src ~src_pos ~dst ~dst_pos:0 ~len;
+    let dst = Bytes.create len in
+    Bytes.blit ~src ~src_pos ~dst ~dst_pos:0 ~len;
     dst
   ;;
 end
@@ -300,6 +306,45 @@ let rewrite t ~template input =
 let valid_rewrite_template t ~template = cre2__valid_rewrite_template t template
 
 let escape input = cre2__escape input
+
+module Multiple = struct
+  type 'a t = {
+    set  : multiple ;
+    vals : 'a array ;
+  };;
+
+  let create_exn ?(options=[]) entries =
+    let t =
+      { set  = cre2__multiple_create (List.map ~f:Options.enum_of_t options)
+      ; vals = Array.of_list         (List.map ~f:snd               entries)
+      }
+    in
+    List.iteri entries ~f:(fun expected (pat, _) ->
+      let observed = cre2__multiple_add t.set pat in
+      if Int.(<>) expected observed
+      then raise_s [%message
+             "cre2__multiple_add returned unexpected index."
+               (expected : int)
+               (observed : int)]);
+    cre2__multiple_compile t.set;
+    t
+  ;;
+
+  let create ?options entries = Or_error.try_with (fun () -> create_exn ?options entries)
+
+  let values_of_indices t indices =
+    Array.fold_right indices ~init:[] ~f:(fun i acc -> t.vals.(i) :: acc)
+  ;;
+
+  let matches_no_order t s = values_of_indices t (cre2__multiple_match t.set s)
+
+  let matches t s =
+    let indices = cre2__multiple_match t.set s in
+    Array.sort indices ~cmp:Int.compare;
+    values_of_indices t indices
+  ;;
+
+end
 
 module Infix = struct
   let (~/) pat = create_exn pat
