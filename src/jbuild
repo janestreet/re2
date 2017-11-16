@@ -8,6 +8,7 @@
   (public_name re2)
   (libraries (core_kernel re2_c))
   (c_library_flags (:standard -lstdc++ -lpthread))
+  (flags (:standard -safe-string))
   (cxx_names (stubs))
   (cxx_flags ((:standard "\\" -pedantic) (-I re2_c/libre2)))
   (preprocess (pps (ppx_jane ppx_driver.runner)))))

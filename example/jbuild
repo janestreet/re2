@@ -1,5 +1,6 @@
 (executables
  ((names (grep2))
+  (flags (:standard -safe-string))
   (libraries (core_kernel
               re2))
   (preprocess (pps ( ppx_driver.runner)))))

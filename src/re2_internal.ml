@@ -232,20 +232,16 @@ module Substring = struct
   let concat_string ~len substrings : string =
     let dst = Bytes.create len in
     ignore (List.fold_left substrings ~init:0 ~f:(fun dst_pos {src; src_pos; len} ->
-      Bytes.blit ~src ~src_pos ~dst ~dst_pos ~len;
+      Bytes.From_string.blit ~src ~src_pos ~dst ~dst_pos ~len;
       dst_pos + len) : int);
-    dst
+    Bytes.unsafe_to_string ~no_mutation_while_string_reachable:dst
   ;;
 
 end
 
 module Return = struct
   let substrings str (pos, len) = Substring.create ~pos ~len str
-  let strings src (src_pos, len) =
-    let dst = Bytes.create len in
-    Bytes.blit ~src ~src_pos ~dst ~dst_pos:0 ~len;
-    dst
-  ;;
+  let strings src (src_pos, len) = String.sub src ~pos:src_pos ~len
 end
 
 let split_internal ?(include_matches=false) return input (matches:Match.t list) =
