@@ -1,3 +1,13 @@
+## v0.10
+
+- Changed `Parser.Decimal.int` to require at least one digit, i.e. to disallow
+  zero digits.
+
+- Added module `Regex.Multiple`, an efficient way to ask which of several
+  regexes matches a string.
+
+## v0.9
+
 ## 113.24.00
 
 - Switched to PPX.
