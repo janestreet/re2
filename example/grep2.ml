@@ -1,5 +1,4 @@
 open StdLabels
-module Re2 = Re2.Std.Re2
 
 let underline_on = Format.sprintf "%c[4m" (Char.chr 27)
 let underline_off = Format.sprintf "%c[24m" (Char.chr 27)
@@ -85,4 +84,3 @@ let _ =
   ~init:stdout
   stdin
 ;;
-

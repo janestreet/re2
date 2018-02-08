@@ -36,7 +36,8 @@ type enum =
 #include "enum_x_macro.h"
 
  module type S = sig
-  (** Polymorphic variants are provided for concision at client call sites. **)
+   (** Polymorphic variants are provided for concision at client call sites. **)
+
   (** these options are exactly as defined by Google with two exceptions:
     - Encoding_latin1 means Latin1 if true and UTF if false
     - Log_errors is false by default (so [noisy] is provided instead of quiet)

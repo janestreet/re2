@@ -1,3 +1,12 @@
+## git version
+
+- Re2 is now a "stdless" library:
+  + one doesn't need to `open Re2.Std` anymore
+  + `Re2.Std.Re2` is now simply `Re2`
+  + `Re2.Std.Parser` is now simply `Re2.Parser`
+  + `Re2.Regex` is now simply `Re2`
+  + `Re.Parser` is left unchanged.
+
 ## v0.10
 
 - Changed `Parser.Decimal.int` to require at least one digit, i.e. to disallow

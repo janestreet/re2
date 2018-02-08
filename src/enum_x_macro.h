@@ -3,10 +3,6 @@
  * the compiler enforces exhaustiveness and synchronization between C
  * and ML.
  *
- * For another example, see
- * jane/trunk/quotefeeds/feedos/lib/quotation.mlp
- * jane/trunk/quotefeeds/feedos/lib/quotation_tags.spec
- *
  * For a description, see
  * "The New C: X Macros" by Randy Meyers, Dr. Dobb's, 01 May 2001,
  * retrieved 11 Sep 2012 from drdobbs.com/184401387

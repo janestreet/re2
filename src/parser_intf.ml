@@ -17,7 +17,7 @@ module type S = sig
   (** [to_regex_string] and [to_re2] both forget what a ['a t] knows
       about turning the matching strings into ['a]s *)
   val to_regex_string : _ t -> string
-  val to_re2 : ?case_sensitive:bool -> _ t -> Re2_internal.t
+  val to_re2 : ?case_sensitive:bool -> _ t -> Regex.t
 
   (** The applicative interface provides sequencing, e.g. [both a b] is a regex that
       parses an [a] followed by a [b] and returns both results in a pair. *)
@@ -31,7 +31,7 @@ module type S = sig
       The returned values are precisely the captures of the underlying regex, in order:
       note that unlike (say) [Re2.Match.get_all], the whole match is *not* included (if
       you want that, just use [capture]). Named captures are not accessible by name. *)
-  val of_re2 : Re2_internal.t -> string option array t
+  val of_re2 : Regex.t -> string option array t
 
   (** [ignore t] is a regex which matches the same strings that [t] matches, but doesn't
       call functions on the captured submatches. Particularly, something like [ignore (map
@@ -70,7 +70,7 @@ module type S = sig
     -> unit t
     -> unit t
 
-  (** [times r n] essentially constructs the regex r{n}. It is equivalent to
+  (** [times r n] essentially constructs the regex [r{n}]. It is equivalent to
       [repeat ~min:n ~max:(Some n) r].
 
       Compare with, say, [all (List.init n ~f:(fun _ -> r))], which constructs the regex
@@ -100,6 +100,7 @@ module type S = sig
     val not_one_of : char list -> char t
 
     (** The following 6 values match the Re2 character classes with the same name. *)
+
     (** A character matching [Char.is_uppercase] *)
     val upper : char t
 

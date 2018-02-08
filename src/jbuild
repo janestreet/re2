@@ -1,7 +1,8 @@
 (rule
  ((targets (options.ml))
   (deps (options.mlp enum_x_macro.h))
-  (action (bash "${CPP} -x c options.mlp > options.ml"))))
+  (action (bash "${CPP} -x c options.mlp > options.ml"))
+  ))
 
 (library
  ((name re2)
@@ -11,6 +12,8 @@
   (flags (:standard -safe-string))
   (cxx_names (stubs))
   (cxx_flags ((:standard "\\" -pedantic) (-I re2_c/libre2)))
-  (preprocess (pps (ppx_jane ppx_driver.runner)))))
+  (preprocess (pps (ppx_jane -check-doc-comments ppx_driver.runner)))
+  ))
+
 
 (jbuild_version 1)

@@ -49,7 +49,7 @@ module Body = struct
       ] in
     let s = to_regex_string t in
     (* We created [t.regex_string] ourselves, so the syntax ought to be good. *)
-    match Re2_internal.create ~options s with
+    match Regex.create ~options s with
     | Ok rex -> rex
     | Error e ->
       failwiths "Re2.Parser.to_re2 BUG: failed to compile"
@@ -59,11 +59,11 @@ module Body = struct
     let rex = to_re2 ?case_sensitive t in
     let to_result = t.to_result in
     Staged.stage (fun s ->
-      match Re2_internal.get_matches_exn ~max:1 rex s with
+      match Regex.get_matches_exn ~max:1 rex s with
       | [] -> None
       | m :: _ ->
-        let m = Re2_internal.without_trailing_none m in
-        Some (to_result 1 (Re2_internal.Match.get_all m)))
+        let m = Regex.without_trailing_none m in
+        Some (to_result 1 (Regex.Match.get_all m)))
 
   let run ?case_sensitive t = Staged.unstage (compile ?case_sensitive t)
 
@@ -75,7 +75,7 @@ module Body = struct
 
   let matches ?case_sensitive t =
     let r = to_re2 ?case_sensitive (ignore t) in
-    fun input -> Re2_internal.matches r input
+    fun input -> Regex.matches r input
 
   module For_test = struct
     let should_match_with_case ~case_sensitive sexp_of_r rex inp result =
@@ -127,7 +127,7 @@ module Body = struct
     }
 
   let string s =
-    of_captureless_string (Re2_internal.escape s)
+    of_captureless_string (Regex.escape s)
 
   let%test_unit _ = should_match_unit (string "blah") "bloblahba"
   let%test_unit _ = should_not_match (string ".") "x"
@@ -328,19 +328,20 @@ module Body = struct
       ((None, None), "b")
 
   let%test_unit _ =
-    should_match_string (or_ [start_of_input *> capture (string "a"); capture (string "b")]) "ba" "b"
+    should_match_string
+      (or_ [start_of_input *> capture (string "a"); capture (string "b")]) "ba" "b"
 
   let of_re2 r =
-    let regex_string = Re2_internal.pattern r in
-    (* [Re2_internal.num_submatches] includes 1 for the whole match, which we omit *)
-    let num_submatches = Re2_internal.num_submatches r - 1 in
+    let regex_string = Regex.pattern r in
+    (* [Regex.num_submatches] includes 1 for the whole match, which we omit *)
+    let num_submatches = Regex.num_submatches r - 1 in
     { regex_string = Rope.(of_string "(?:" ^ of_string regex_string ^ of_string ")")
     ; num_submatches
     ; to_result = fun shift matches -> Array.sub matches ~pos:shift ~len:num_submatches
     }
   let%test_module _ =
     (module struct
-      let mk s = of_re2 (Re2_internal.create_exn s)
+      let mk s = of_re2 (Regex.create_exn s)
 
       let%test_unit _ =
         let r = mk "a(b)(?:c([de])|(?P<foo>f)g)" in
@@ -362,7 +363,7 @@ module Body = struct
     end)
 
   let%test_unit _ =
-    let r = of_re2 (Re2_internal.create_exn "a|b") in
+    let r = of_re2 (Regex.create_exn "a|b") in
     let rs =
       [ start_of_input *> ignore (r <* string "x") <* end_of_input
       ; start_of_input *> ignore (capture (ignore (r <* string "x"))) <* end_of_input
@@ -409,7 +410,7 @@ module Body = struct
         let%test_unit _ = matches_pred any   (Fn.const true)
       end)
 
-    let char_list_to_regex_string chars = Re2_internal.escape (String.of_char_list chars)
+    let char_list_to_regex_string chars = Regex.escape (String.of_char_list chars)
 
     let one_of = function
       | [] -> fail
@@ -494,14 +495,15 @@ module Body = struct
             (Staged.unstage regex (String.make n 'x'))
             ~expect:(Some (String.make n 'x'))
 
-      let%bench_fun "compilation" [@indexed n = [500; 1000; 2000; 10000]] =
+      let%bench_fun "compilation" [@indexed (=) n [500; 1000; 2000; 10000]] =
         (fun () ->
-          let (_ : unit -> unit) = big_regex_benchmark n in
-          ())
+           let (_ : unit -> unit) = big_regex_benchmark n in
+           ())
 
-      let%bench_fun "matching only" [@indexed n = [500; 1000; 2000]] = big_regex_benchmark n
+      let%bench_fun "matching only" [@indexed (=) n [500; 1000; 2000]] =
+        big_regex_benchmark n
 
-      end)
+    end)
 
 end
 include Body
