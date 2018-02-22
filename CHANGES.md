@@ -1,3 +1,7 @@
+## v0.10.1
+
+- Fix build with jbuilder 1.0+beta18
+
 ## 113.24.00
 
 - Switched to PPX.
