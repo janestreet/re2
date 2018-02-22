@@ -11,7 +11,7 @@
   (c_library_flags (:standard -lstdc++ -lpthread))
   (flags (:standard -safe-string))
   (cxx_names (stubs))
-  (cxx_flags ((:standard "\\" -pedantic) (-I re2_c/libre2)))
+  (cxx_flags ((:standard \ -pedantic) (-I re2_c/libre2)))
   (preprocess (pps (ppx_jane -check-doc-comments ppx_driver.runner)))
   ))
 
