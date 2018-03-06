@@ -390,13 +390,13 @@ let%test_module _ = (
   end)
 
 let%bench_fun "find_submatches with many Nones" [@indexed n = [5;10;50;100;200]] =
-let regex =
-  "^" ^
-  String.concat ~sep:"|"
-    (List.init n ~f:(fun i -> "(" ^ Int.to_string i ^ ")"))
-  ^ "$"
-  |> create_exn
-in
-(fun () ->
-   let _r = find_submatches regex (Int.to_string n) in
-   ())
+  let regex =
+    "^" ^
+    String.concat ~sep:"|"
+      (List.init n ~f:(fun i -> "(" ^ Int.to_string i ^ ")"))
+    ^ "$"
+    |> create_exn
+  in
+  (fun () ->
+     let _r = find_submatches regex (Int.to_string n) in
+     ())

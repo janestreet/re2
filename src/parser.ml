@@ -8,7 +8,7 @@ module Body = struct
     (* Requirements on [regex_string]:
        - it must have a valid Re2 syntax;
        - it must not change meaning if concatenated with another allowed regex_string:
-       in particular, 'a|b' is not allowed (use e.g. '(?:a|b)' instead).
+         in particular, 'a|b' is not allowed (use e.g. '(?:a|b)' instead).
     *)
     type 'a t =
       { regex_string : Rope.t
