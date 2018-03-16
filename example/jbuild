@@ -3,7 +3,7 @@
   (flags (:standard -safe-string))
   (libraries (core_kernel
               re2))
-  (preprocess (pps ( ppx_driver.runner)))))
+  (preprocess (pps ( ppxlib.runner)))))
 
 
 (jbuild_version 1)

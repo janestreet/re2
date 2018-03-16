@@ -341,7 +341,7 @@ module Multiple = struct
 
   let matches t s =
     let indices = cre2__multiple_match t.set s in
-    Array.sort indices ~cmp:Int.compare;
+    Array.sort indices ~compare:Int.compare;
     values_of_indices t indices
   ;;
 
