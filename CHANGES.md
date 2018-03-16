@@ -1,4 +1,4 @@
-## git version
+## v0.11
 
 - Re2 is now a "stdless" library:
   + one doesn't need to `open Re2.Std` anymore
