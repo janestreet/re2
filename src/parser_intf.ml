@@ -137,13 +137,10 @@ module type S = sig
 end
 
 module type Parser = sig
-  module type S = S
-  include S
-  module Let_syntax : sig
-    val return : 'a -> 'a t
-    module Let_syntax : sig
-      include S with type 'a t := 'a t
-      module Open_on_rhs : S with type 'a t := 'a t
-    end
-  end
+  type 'a t
+  module Open_on_rhs_intf : sig module type S = S with type 'a t = 'a t end
+  include Applicative.Let_syntax
+    with type 'a t := 'a t
+    with module Open_on_rhs_intf := Open_on_rhs_intf
+  include Open_on_rhs_intf.S with type 'a t := 'a t
 end

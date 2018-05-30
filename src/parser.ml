@@ -5,6 +5,7 @@ include Parser_intf
 
 module Body = struct
   module T = struct
+
     (* Requirements on [regex_string]:
        - it must have a valid Re2 syntax;
        - it must not change meaning if concatenated with another allowed regex_string:
@@ -35,7 +36,7 @@ module Body = struct
       }
   end
   include T
-  include Applicative.Make(T)
+  include Applicative.Make (T)
 
   let to_regex_string t = Rope.to_string t.regex_string
 
@@ -508,10 +509,5 @@ module Body = struct
 end
 include Body
 
-module Let_syntax = struct
-  let return = return
-  module Let_syntax = struct
-    include Body
-    module Open_on_rhs = Body
-  end
-end
+module Open_on_rhs_intf = struct module type S = S with type 'a t = 'a t end
+include Applicative.Make_let_syntax (Body) (Open_on_rhs_intf) (Body)
