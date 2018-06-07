@@ -384,8 +384,7 @@ extern "C" {
 
     v_retval = Val_emptylist;
     for (std::vector<StringPiece>::reverse_iterator it = results.rbegin(); it != results.rend(); ++it) {
-      v_car = caml_alloc_string(it->length());
-      memcpy(String_val(v_car), String_val(v_str) + (it->data() - input), it->length());
+      v_car = caml_alloc_initialized_string(it->length(), String_val(v_str) + (it->data() - input));
       v_cons = caml_alloc_small(2, Tag_cons);
       Field(v_cons, 0) = v_car;
       Field(v_cons, 1) = v_retval;
@@ -425,8 +424,7 @@ extern "C" {
           2, error_args);
     }
 
-    v_retval = caml_alloc_string(sub->length());
-    memcpy(String_val(v_retval), String_val(v_str) + (sub->data() - input), sub->length());
+    v_retval = caml_alloc_initialized_string(sub->length(),String_val(v_str) + (sub->data() - input));
     delete[] submatches;
     CAMLreturn(v_retval);
   }
@@ -488,7 +486,7 @@ extern "C" {
     CAMLparam2(v_multiple, v_pattern);
     CAMLlocal1(v_compile_error);
 
-    char *pattern_str = String_val(v_pattern);
+    const char *pattern_str = String_val(v_pattern);
     RE2::Set* set = RegexSet_val(v_multiple);
     string errstr;
     int idx = set->Add(pattern_str, &errstr);
@@ -515,7 +513,7 @@ extern "C" {
   CAMLprim value mlre2__multiple_match(value v_multiple, value v_str){
     CAMLparam2(v_multiple, v_str);
     CAMLlocal1(res);
-    char *str = String_val(v_str);
+    const char *str = String_val(v_str);
     RE2::Set *set = RegexSet_val(v_multiple);
     std::vector<int> matches;
 
