@@ -22,8 +22,13 @@
   (deps ((files_recursively_in libre2)))
   (action (bash "
 ARFLAGS=rsc
-CXX=g++
 CXXFLAGS=\"-Wall -O3 -g -pthread\"
+if [ FreeBSD = `uname -s` ]; then
+       CXX=clang++
+       CXXFLAGS=\"$CXXFLAGS -I /usr/local/lib/re2\"
+else
+       CXX=g++
+fi
 if ! ${ARCH_SIXTYFOUR}; then
   CXX=\"$CXX -m32\"
 fi
