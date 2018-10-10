@@ -348,12 +348,7 @@ module Multiple = struct
 end
 
 module Infix = struct
-  let (~/) pat = create_exn pat
-
-  let (//~!) input t = find_first_exn t input
-  let (//~)  input t = find_first t input
-
-  let (=~)   input t = matches t input
+  let (=~) input t = matches t input
 end
 
 let%test_module _ = (

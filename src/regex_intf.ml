@@ -150,15 +150,8 @@ runs even faster if nmatch == 0. v}
   (** {6 Infix Operators} *)
 
   module Infix : sig
-    (** [create_exn] *)
-    val (~/) : string -> t
-
     (** [input =~ pattern] an infix alias of [matches] *)
     val (=~)  : string -> t -> bool
-
-    (** [input //~ pattern] an infix alias of [find_first] *)
-    val (//~)  : string -> t -> string Or_error.t
-    val (//~!) : string -> t -> string
   end
 
   (** {6 Complicated Interface} *)

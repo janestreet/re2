@@ -348,7 +348,7 @@ extern "C" {
     return Val_int(Regex_val(v_regex)->Match(str, 0, str.length(),
                                              RE2::UNANCHORED, NULL, 0));
   }
-
+  
   CAMLprim value mlre2__find_all(value v_regex, value v_sub, value v_str) {
     CAMLparam2(v_regex, v_str);
     CAMLlocal3(v_retval, v_car, v_cons);
@@ -384,7 +384,12 @@ extern "C" {
 
     v_retval = Val_emptylist;
     for (std::vector<StringPiece>::reverse_iterator it = results.rbegin(); it != results.rend(); ++it) {
-      v_car = caml_alloc_initialized_string(it->length(), String_val(v_str) + (it->data() - input));
+      /* We take a substring of an ocaml string, which caml_alloc_initialized_string
+         doesn't handle, because the allocation can move the memory we're trying to copy
+         (and wouldn't be enough here, as we do multiple allocations). So stick with
+         alloc, compute pointer, blit. */
+      v_car = caml_alloc_string(it->length());
+      memcpy(Bytes_val(v_car), String_val(v_str) + (it->data() - input), it->length());
       v_cons = caml_alloc_small(2, Tag_cons);
       Field(v_cons, 0) = v_car;
       Field(v_cons, 1) = v_retval;
@@ -424,7 +429,9 @@ extern "C" {
           2, error_args);
     }
 
-    v_retval = caml_alloc_initialized_string(sub->length(),String_val(v_str) + (sub->data() - input));
+    /* see comment above about why caml_alloc_initialized_string doesn't work */
+    v_retval = caml_alloc_string(sub->length());
+    memcpy(Bytes_val(v_retval), String_val(v_str) + (sub->data() - input), sub->length());
     delete[] submatches;
     CAMLreturn(v_retval);
   }
