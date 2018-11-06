@@ -7,6 +7,7 @@
 
 #define Regex_val(v) (*(RE2 **) Data_custom_val(v))
 #define RegexSet_val(v) (*(RE2::Set **) Data_custom_val(v))
+#define RegexOptions_val(v) (*(RE2::Options **) Data_custom_val(v))
 
 #define PAIR(v_dst, v_a, v_b) do {                   \
     v_dst = caml_alloc_small(2, 0);                  \

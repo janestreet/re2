@@ -175,9 +175,28 @@ extern "C" {
 #endif
   };
 
-  CAMLprim void mlre2__init(void) {
+  void mlre2__custom_regex_options_finalize(value v_obj) {
+    delete RegexOptions_val(v_obj);
+  }
+
+  struct custom_operations mlre2__custom_regex_options_ops = {
+    (char *)"com.janestreet.re2-ocaml.regex-options-v23Oct2018",
+    mlre2__custom_regex_options_finalize,
+    custom_compare_default,
+    custom_hash_default,
+    custom_serialize_default,
+    custom_deserialize_default,
+#ifdef custom_compare_ext_default
+    custom_compare_ext_default
+#endif
+  };
+
+  CAMLprim value mlre2__init(value unit) {
+    (void) unit;
     caml_register_custom_operations(&mlre2__custom_regex_ops);
     caml_register_custom_operations(&mlre2__custom_regex_multiple_ops);
+    caml_register_custom_operations(&mlre2__custom_regex_options_ops);
+    return Val_unit;
   }
 
   static int new_pos(const char *input, StringPiece &remaining, int startpos, StringPiece &match) {
@@ -221,31 +240,6 @@ extern "C" {
     CAMLreturn0;
   }
 
-  /* N.B. this enum must exactly match the tag values of the variants in
-   * Re2.Regex.Options.t or else options will be silently misinterpreted. */
-  enum options_tags {
-#define X(_u,FIRST,REST,_uu) FIRST##REST,
-#define X__ENCODING(_u,FIRST,REST,_uu,SUFFIX,_uuu,_uuuu) FIRST##REST##SUFFIX,
-#define X__MAXMEM(_u,FIRST,REST,_uu) FIRST##REST,
-#include "enum_x_macro.h"
-  };
-
-  static void set_options(RE2::Options &opt, value v_options) {
-    opt.Copy(RE2::Quiet);
-    while (v_options != Val_emptylist) {
-      int val = Int_val(Field(Field(v_options, 0), 0));
-      switch (Tag_val(Field(v_options, 0))) {
-#define X(_u,FIRST,REST,_uu) case FIRST##REST : opt.set_##FIRST##REST(val); break;
-#define X__ENCODING(_u,FIRST,REST,_uu,SUFFIX,_uuu,TRANSLATED)               \
-        case FIRST##REST##SUFFIX : opt.set_##FIRST##REST(val TRANSLATED); break;
-#define X__MAXMEM(_u,FIRST,REST,_uu) X(_u,FIRST,REST,_uu)
-#include "enum_x_macro.h"
-      default              : caml_invalid_argument("invalid option\n");
-      }
-      v_options = Field(v_options, 1);
-    }
-  }
-
   /* returns (cre2__obj_t * int * (string * int) list) where
    * - cre2__obj_t is the ML-side name for a custom_block with a struct regex *
    * - int is the number of submatches, including the whole match
@@ -254,12 +248,9 @@ extern "C" {
   CAMLprim value mlre2__create_re(value v_options, value v_pattern) {
     value v_retval, v_compile_error;
     const char * c_pat = String_val(v_pattern);
-    RE2::Options opt;
     RE2* compiled = NULL;
 
-    set_options(opt, v_options);
-
-    compiled = new RE2(c_pat, opt);
+    compiled = new RE2(c_pat, *RegexOptions_val(v_options));
 
     if (!compiled->ok()) {
       /* Warning
@@ -348,7 +339,7 @@ extern "C" {
     return Val_int(Regex_val(v_regex)->Match(str, 0, str.length(),
                                              RE2::UNANCHORED, NULL, 0));
   }
-  
+
   CAMLprim value mlre2__find_all(value v_regex, value v_sub, value v_str) {
     CAMLparam2(v_regex, v_str);
     CAMLlocal3(v_retval, v_car, v_cons);
@@ -473,12 +464,9 @@ extern "C" {
     CAMLparam1(v_options);
     CAMLlocal1(v_retval);
 
-    RE2::Options opt;
     RE2::Set* set = NULL;
 
-    set_options(opt, v_options);
-
-    set = new RE2::Set(opt, RE2::UNANCHORED);
+    set = new RE2::Set(*RegexOptions_val(v_options), RE2::UNANCHORED);
 
     v_retval = caml_alloc_custom(&mlre2__custom_regex_multiple_ops, sizeof(set),
         1024*1024,      /* RE2 object uses ~1MB of memory outside the OCaml heap */
@@ -530,6 +518,229 @@ extern "C" {
       Store_field(res, i, Val_int(matches[i]));
     }
     CAMLreturn(res);
+  }
+
+  /*$ #use "options.cinaps";;
+    List.iter all ~f:(fun { name; type_ = { value_of_c; value_to_c; _} } ->
+    printf "\n  \
+    CAMLprim value mlre2__options__%s(value v_options) {\n    \
+    CAMLparam1(v_options);\n    \
+    RE2::Options *options = RegexOptions_val(v_options);\n    \
+    CAMLreturn(%s(options->%s()));\n  \
+    }\n\
+    \n  \
+    CAMLprim value mlre2__options__set_%s(value v_options, value v_value) {\n    \
+    CAMLparam2(v_options, v_value);\n    \
+    RE2::Options *options = RegexOptions_val(v_options);\n    \
+    options->set_%s(%s(v_value));\n    \
+    CAMLreturn(Val_unit);\n  \
+    }\n" name value_of_c name name name value_to_c); */
+  CAMLprim value mlre2__options__case_sensitive(value v_options) {
+    CAMLparam1(v_options);
+    RE2::Options *options = RegexOptions_val(v_options);
+    CAMLreturn(Val_bool(options->case_sensitive()));
+  }
+
+  CAMLprim value mlre2__options__set_case_sensitive(value v_options, value v_value) {
+    CAMLparam2(v_options, v_value);
+    RE2::Options *options = RegexOptions_val(v_options);
+    options->set_case_sensitive(Bool_val(v_value));
+    CAMLreturn(Val_unit);
+  }
+
+  CAMLprim value mlre2__options__dot_nl(value v_options) {
+    CAMLparam1(v_options);
+    RE2::Options *options = RegexOptions_val(v_options);
+    CAMLreturn(Val_bool(options->dot_nl()));
+  }
+
+  CAMLprim value mlre2__options__set_dot_nl(value v_options, value v_value) {
+    CAMLparam2(v_options, v_value);
+    RE2::Options *options = RegexOptions_val(v_options);
+    options->set_dot_nl(Bool_val(v_value));
+    CAMLreturn(Val_unit);
+  }
+
+  CAMLprim value mlre2__options__encoding(value v_options) {
+    CAMLparam1(v_options);
+    RE2::Options *options = RegexOptions_val(v_options);
+    CAMLreturn(Val_int(options->encoding()));
+  }
+
+  CAMLprim value mlre2__options__set_encoding(value v_options, value v_value) {
+    CAMLparam2(v_options, v_value);
+    RE2::Options *options = RegexOptions_val(v_options);
+    options->set_encoding(static_cast<RE2::Options::Encoding>Int_val(v_value));
+    CAMLreturn(Val_unit);
+  }
+
+  CAMLprim value mlre2__options__literal(value v_options) {
+    CAMLparam1(v_options);
+    RE2::Options *options = RegexOptions_val(v_options);
+    CAMLreturn(Val_bool(options->literal()));
+  }
+
+  CAMLprim value mlre2__options__set_literal(value v_options, value v_value) {
+    CAMLparam2(v_options, v_value);
+    RE2::Options *options = RegexOptions_val(v_options);
+    options->set_literal(Bool_val(v_value));
+    CAMLreturn(Val_unit);
+  }
+
+  CAMLprim value mlre2__options__log_errors(value v_options) {
+    CAMLparam1(v_options);
+    RE2::Options *options = RegexOptions_val(v_options);
+    CAMLreturn(Val_bool(options->log_errors()));
+  }
+
+  CAMLprim value mlre2__options__set_log_errors(value v_options, value v_value) {
+    CAMLparam2(v_options, v_value);
+    RE2::Options *options = RegexOptions_val(v_options);
+    options->set_log_errors(Bool_val(v_value));
+    CAMLreturn(Val_unit);
+  }
+
+  CAMLprim value mlre2__options__longest_match(value v_options) {
+    CAMLparam1(v_options);
+    RE2::Options *options = RegexOptions_val(v_options);
+    CAMLreturn(Val_bool(options->longest_match()));
+  }
+
+  CAMLprim value mlre2__options__set_longest_match(value v_options, value v_value) {
+    CAMLparam2(v_options, v_value);
+    RE2::Options *options = RegexOptions_val(v_options);
+    options->set_longest_match(Bool_val(v_value));
+    CAMLreturn(Val_unit);
+  }
+
+  CAMLprim value mlre2__options__max_mem(value v_options) {
+    CAMLparam1(v_options);
+    RE2::Options *options = RegexOptions_val(v_options);
+    CAMLreturn(Val_int(options->max_mem()));
+  }
+
+  CAMLprim value mlre2__options__set_max_mem(value v_options, value v_value) {
+    CAMLparam2(v_options, v_value);
+    RE2::Options *options = RegexOptions_val(v_options);
+    options->set_max_mem(Int_val(v_value));
+    CAMLreturn(Val_unit);
+  }
+
+  CAMLprim value mlre2__options__never_capture(value v_options) {
+    CAMLparam1(v_options);
+    RE2::Options *options = RegexOptions_val(v_options);
+    CAMLreturn(Val_bool(options->never_capture()));
+  }
+
+  CAMLprim value mlre2__options__set_never_capture(value v_options, value v_value) {
+    CAMLparam2(v_options, v_value);
+    RE2::Options *options = RegexOptions_val(v_options);
+    options->set_never_capture(Bool_val(v_value));
+    CAMLreturn(Val_unit);
+  }
+
+  CAMLprim value mlre2__options__never_nl(value v_options) {
+    CAMLparam1(v_options);
+    RE2::Options *options = RegexOptions_val(v_options);
+    CAMLreturn(Val_bool(options->never_nl()));
+  }
+
+  CAMLprim value mlre2__options__set_never_nl(value v_options, value v_value) {
+    CAMLparam2(v_options, v_value);
+    RE2::Options *options = RegexOptions_val(v_options);
+    options->set_never_nl(Bool_val(v_value));
+    CAMLreturn(Val_unit);
+  }
+
+  CAMLprim value mlre2__options__one_line(value v_options) {
+    CAMLparam1(v_options);
+    RE2::Options *options = RegexOptions_val(v_options);
+    CAMLreturn(Val_bool(options->one_line()));
+  }
+
+  CAMLprim value mlre2__options__set_one_line(value v_options, value v_value) {
+    CAMLparam2(v_options, v_value);
+    RE2::Options *options = RegexOptions_val(v_options);
+    options->set_one_line(Bool_val(v_value));
+    CAMLreturn(Val_unit);
+  }
+
+  CAMLprim value mlre2__options__perl_classes(value v_options) {
+    CAMLparam1(v_options);
+    RE2::Options *options = RegexOptions_val(v_options);
+    CAMLreturn(Val_bool(options->perl_classes()));
+  }
+
+  CAMLprim value mlre2__options__set_perl_classes(value v_options, value v_value) {
+    CAMLparam2(v_options, v_value);
+    RE2::Options *options = RegexOptions_val(v_options);
+    options->set_perl_classes(Bool_val(v_value));
+    CAMLreturn(Val_unit);
+  }
+
+  CAMLprim value mlre2__options__posix_syntax(value v_options) {
+    CAMLparam1(v_options);
+    RE2::Options *options = RegexOptions_val(v_options);
+    CAMLreturn(Val_bool(options->posix_syntax()));
+  }
+
+  CAMLprim value mlre2__options__set_posix_syntax(value v_options, value v_value) {
+    CAMLparam2(v_options, v_value);
+    RE2::Options *options = RegexOptions_val(v_options);
+    options->set_posix_syntax(Bool_val(v_value));
+    CAMLreturn(Val_unit);
+  }
+
+  CAMLprim value mlre2__options__word_boundary(value v_options) {
+    CAMLparam1(v_options);
+    RE2::Options *options = RegexOptions_val(v_options);
+    CAMLreturn(Val_bool(options->word_boundary()));
+  }
+
+  CAMLprim value mlre2__options__set_word_boundary(value v_options, value v_value) {
+    CAMLparam2(v_options, v_value);
+    RE2::Options *options = RegexOptions_val(v_options);
+    options->set_word_boundary(Bool_val(v_value));
+    CAMLreturn(Val_unit);
+  }
+/*$*/
+
+  /* The caller is responsible for assigning the returned value into a variable
+     registered with [CAMLlocal*]. */
+  value mlre2__options_alloc_custom_block(void) {
+    return caml_alloc_custom(&mlre2__custom_regex_options_ops, sizeof(RE2::Options *),
+                      100,      /* uses ~100 bytes outside the OCaml heap */
+                      1000 * 100);  /* I'm okay with 100k of RAM being wasted */
+  }
+
+  CAMLprim value mlre2__options__create_quiet(value unit) {
+    CAMLparam1(unit);
+    CAMLlocal1(v_retval);
+    v_retval = mlre2__options_alloc_custom_block();
+    RegexOptions_val(v_retval) = new RE2::Options();
+    RegexOptions_val(v_retval)->Copy(RE2::Quiet);
+    CAMLreturn(v_retval);
+  }
+
+  CAMLprim value mlre2__options__encoding__get_latin1(value unit) {
+    (void) unit;
+    return Val_int(RE2::Options::EncodingLatin1);
+  }
+
+  CAMLprim value mlre2__options__encoding__get_utf8(value unit) {
+    (void) unit;
+    return Val_int(RE2::Options::EncodingUTF8);
+  }
+
+  CAMLprim value mlre2__options(value v_regex) {
+    CAMLparam1(v_regex);
+    CAMLlocal1(v_retval);
+    RE2::Options *options = new RE2::Options();
+    options->Copy(Regex_val(v_regex)->options());
+
+    v_retval = mlre2__options_alloc_custom_block();
+    RegexOptions_val(v_retval) = options;
+    CAMLreturn(v_retval);
   }
 
 } /* extern "C" */

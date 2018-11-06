@@ -71,7 +71,7 @@ runs even faster if nmatch == 0. v}
   *)
 
 
-  module Options : Options.S
+  module Options = Options
 
   val create     : ?options:Options.t list -> string -> t Or_error.t
   val create_exn : ?options:Options.t list -> string -> t
@@ -87,6 +87,9 @@ runs even faster if nmatch == 0. v}
 
   (** [pattern t] returns the pattern from which the regex was constructed. *)
   val pattern : t -> string
+
+  (** [options t] expands out the default flags. *)
+  val options : t -> Options.t list
 
   (** [find_all t input] a convenience function that returns all non-overlapping
       matches of [t] against [input], in left-to-right order.

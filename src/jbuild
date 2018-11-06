@@ -1,9 +1,3 @@
-(rule
- ((targets (options.ml))
-  (deps (options.mlp enum_x_macro.h))
-  (action (bash "${CPP} -x c options.mlp > options.ml"))
-  ))
-
 (library
  ((name re2)
   (public_name re2)
@@ -14,5 +8,19 @@
   (preprocess (pps (ppx_jane -check-doc-comments ppxlib.runner)))
   ))
 
+(alias
+ ((name runtest)
+  (deps (options.ml options.cinaps))
+  (action (bash "${bin:cinaps} ${<}"))))
+
+(alias
+ ((name runtest)
+  (deps (stubs.cpp options.cinaps))
+  (action (bash "${bin:cinaps} ${<}"))))
+
+(alias
+ ((name runtest)
+  (deps (stubs.h options.cinaps))
+  (action (bash "${bin:cinaps} ${<}"))))
 
 (jbuild_version 1)

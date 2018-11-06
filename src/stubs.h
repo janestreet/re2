@@ -7,7 +7,7 @@ extern "C" {
 #include <caml/memory.h>
 #include <re2/re2.h>
   /* must be called before any other functions. */
-  extern void mlre2__init(void);
+  extern value mlre2__init(value unit);
 
   extern value mlre2__create_re(value v_options, value v_pattern);
   /** [mlre2__create_re(v_options, v_pattern)]
@@ -89,6 +89,51 @@ extern "C" {
   extern value mlre2__multiple_match(value v_multiple, value v_str);
   /** These are thin wrappers around the similarly named RE2::Set methods. The naming is
       to avoid conflicts with [Set] on the OCaml side. */
+
+  /** Some CINAPS templating to declare the getters and setters for options fields. */
+
+  /*$ #use "options.cinaps";;
+   List.iter all ~f:(fun { name; _} ->
+   printf "\n  \
+   extern value mlre2__options__%s(value v_options);\n  \
+   extern value mlre2__options__set_%s(value v_options, value v_value);" name name);;
+  */
+  extern value mlre2__options__case_sensitive(value v_options);
+  extern value mlre2__options__set_case_sensitive(value v_options, value v_value);
+  extern value mlre2__options__dot_nl(value v_options);
+  extern value mlre2__options__set_dot_nl(value v_options, value v_value);
+  extern value mlre2__options__encoding(value v_options);
+  extern value mlre2__options__set_encoding(value v_options, value v_value);
+  extern value mlre2__options__literal(value v_options);
+  extern value mlre2__options__set_literal(value v_options, value v_value);
+  extern value mlre2__options__log_errors(value v_options);
+  extern value mlre2__options__set_log_errors(value v_options, value v_value);
+  extern value mlre2__options__longest_match(value v_options);
+  extern value mlre2__options__set_longest_match(value v_options, value v_value);
+  extern value mlre2__options__max_mem(value v_options);
+  extern value mlre2__options__set_max_mem(value v_options, value v_value);
+  extern value mlre2__options__never_capture(value v_options);
+  extern value mlre2__options__set_never_capture(value v_options, value v_value);
+  extern value mlre2__options__never_nl(value v_options);
+  extern value mlre2__options__set_never_nl(value v_options, value v_value);
+  extern value mlre2__options__one_line(value v_options);
+  extern value mlre2__options__set_one_line(value v_options, value v_value);
+  extern value mlre2__options__perl_classes(value v_options);
+  extern value mlre2__options__set_perl_classes(value v_options, value v_value);
+  extern value mlre2__options__posix_syntax(value v_options);
+  extern value mlre2__options__set_posix_syntax(value v_options, value v_value);
+  extern value mlre2__options__word_boundary(value v_options);
+  extern value mlre2__options__set_word_boundary(value v_options, value v_value);/*$*/
+
+  extern value mlre2__options__create_quiet(value unit);
+  /** The quiet Options constructor, in a custom block */
+
+  extern value mlre2__options__encoding__get_latin1(value unit);
+  extern value mlre2__options__encoding__get_utf8(value unit);
+  /** The values of RE2::Options::Encoding, as OCaml ints */
+
+  extern value mlre2__options(value v_regex);
+  /** returns a copy of the options used to create a regex. */
 
 } /* extern "C" */
 

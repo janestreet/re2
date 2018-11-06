@@ -16,12 +16,14 @@ let without_trailing_none = Fn.id
 module Options = Options
 
 external cre2__init : unit -> unit = "mlre2__init"
-external cre2__create_re : Options.enum list -> string -> t = "mlre2__create_re"
+external cre2__create_re : Options.C_repr.t -> string -> t = "mlre2__create_re"
 external cre2__num_submatches : t -> int = "mlre2__num_submatches" [@@noalloc]
 
 external cre2__submatch_index : t -> string -> int = "mlre2__submatch_index" [@@noalloc]
 
 external cre2__pattern : t -> string = "mlre2__pattern"
+
+external cre2__options : t -> Options.C_repr.t = "mlre2__options"
 
 external cre2__iter_next :
   t
@@ -40,7 +42,7 @@ external cre2__valid_rewrite_template : t -> string -> bool =
 external cre2__escape : string -> string = "mlre2__escape"
 
 type multiple
-external cre2__multiple_create  : Options.enum list -> multiple   = "mlre2__multiple_create"
+external cre2__multiple_create  : Options.C_repr.t -> multiple    = "mlre2__multiple_create"
 external cre2__multiple_add     : multiple -> string -> int       = "mlre2__multiple_add"
 external cre2__multiple_compile : multiple -> unit                = "mlre2__multiple_compile"
 external cre2__multiple_match   : multiple -> string -> int array = "mlre2__multiple_match"
@@ -89,13 +91,14 @@ include Exceptions
 let () = cre2__init ()    (* register custom operations *)
 
 let create_exn ?(options=[]) pat =
-  cre2__create_re (List.map ~f:Options.enum_of_t options) pat
+  cre2__create_re (Options.to_c_repr options) pat
 ;;
 
 let create ?options pat = Or_error.try_with (fun () -> create_exn ?options pat)
 
-let num_submatches t          = cre2__num_submatches t
-let pattern t                 = cre2__pattern t
+let num_submatches t = cre2__num_submatches t
+let pattern t        = cre2__pattern t
+let options t        = cre2__options t |> Options.of_c_repr
 
 let of_string pat = create_exn pat
 let to_string t   = cre2__pattern t
@@ -316,7 +319,7 @@ module Multiple = struct
 
   let create_exn ?(options=[]) entries =
     let t =
-      { set  = cre2__multiple_create (List.map ~f:Options.enum_of_t options)
+      { set  = cre2__multiple_create (Options.to_c_repr options)
       ; vals = Array.of_list         (List.map ~f:snd               entries)
       }
     in
