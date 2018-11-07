@@ -1,34 +1,11 @@
 open! Core_kernel
 
-type t = [
-  | `Case_sensitive of bool
-  | `Dot_nl of bool
-  | `Encoding_latin1 of bool
-  | `Literal of bool
-  | `Log_errors of bool
-  | `Longest_match of bool
-  | `Max_mem of int
-  | `Never_capture of bool
-  | `Never_nl of bool
-  | `One_line of bool
-  | `Perl_classes of bool
-  | `Posix_syntax of bool
-  | `Word_boundary of bool
-]
-[@@deriving compare, sexp_of]
-
-let latin1 = [ `Encoding_latin1 true; ]
-
-let posix = [ `Posix_syntax true; `Longest_match true; ]
-
-let noisy = [ `Log_errors true; ]
-
 module Encoding = struct
 
   type t =
     | Latin1
     | Utf8
-  [@@deriving compare, equal]
+  [@@deriving compare, equal, sexp_of]
 
   module C_repr = struct
     type t = int [@@deriving compare, sexp_of]
@@ -56,6 +33,23 @@ module Encoding = struct
   ;;
 
 end
+
+type t =
+  { case_sensitive : bool
+  ; dot_nl         : bool
+  ; encoding       : Encoding.t
+  ; literal        : bool
+  ; log_errors     : bool
+  ; longest_match  : bool
+  ; max_mem        : int
+  ; never_capture  : bool
+  ; never_nl       : bool
+  ; one_line       : bool
+  ; perl_classes   : bool
+  ; posix_syntax   : bool
+  ; word_boundary  : bool
+  }
+[@@deriving compare, fields, sexp_of]
 
 module C_repr = struct
   type t
@@ -111,72 +105,72 @@ module C_repr = struct
 
   external create_quiet : unit -> t = "mlre2__options__create_quiet"
 
-
 end
 
-let to_c_repr ts =
+let to_c_repr t =
   let c_repr = C_repr.create_quiet () in
-  List.iter ts ~f:(function
-    | `Encoding_latin1 true -> C_repr.set_encoding c_repr (Encoding.to_c_repr Latin1)
-    | `Encoding_latin1 false -> C_repr.set_encoding c_repr (Encoding.to_c_repr Utf8)
-    (*$ List.iter all_but_encoding ~f:(fun { name; type_ = _} ->
-      printf "\n    | `%s b -> C_repr.set_%s c_repr b"
-      (String.capitalize_ascii name) name) *)
-    | `Case_sensitive b -> C_repr.set_case_sensitive c_repr b
-    | `Dot_nl b -> C_repr.set_dot_nl c_repr b
-    | `Literal b -> C_repr.set_literal c_repr b
-    | `Log_errors b -> C_repr.set_log_errors c_repr b
-    | `Longest_match b -> C_repr.set_longest_match c_repr b
-    | `Max_mem b -> C_repr.set_max_mem c_repr b
-    | `Never_capture b -> C_repr.set_never_capture c_repr b
-    | `Never_nl b -> C_repr.set_never_nl c_repr b
-    | `One_line b -> C_repr.set_one_line c_repr b
-    | `Perl_classes b -> C_repr.set_perl_classes c_repr b
-    | `Posix_syntax b -> C_repr.set_posix_syntax c_repr b
-    | `Word_boundary b -> C_repr.set_word_boundary c_repr b(*$*));
+  let f set _field _t value = set c_repr value in
+  Fields.Direct.iter t
+    (*$ List.iter all ~f:(fun { name; type_ = _} ->
+      if String.equal "encoding" name
+      then printf "\n\
+      ~encoding:(f (fun c_repr value -> \
+      C_repr.set_encoding c_repr (Encoding.to_c_repr value)))"
+      else printf "\n\
+      ~%s:(f C_repr.set_%s)" name name) *)
+    ~case_sensitive:(f C_repr.set_case_sensitive)
+    ~dot_nl:(f C_repr.set_dot_nl)
+    ~encoding:(f (fun c_repr value -> C_repr.set_encoding c_repr (Encoding.to_c_repr value)))
+    ~literal:(f C_repr.set_literal)
+    ~log_errors:(f C_repr.set_log_errors)
+    ~longest_match:(f C_repr.set_longest_match)
+    ~max_mem:(f C_repr.set_max_mem)
+    ~never_capture:(f C_repr.set_never_capture)
+    ~never_nl:(f C_repr.set_never_nl)
+    ~one_line:(f C_repr.set_one_line)
+    ~perl_classes:(f C_repr.set_perl_classes)
+    ~posix_syntax:(f C_repr.set_posix_syntax)
+    ~word_boundary:(f C_repr.set_word_boundary)(*$*);
   c_repr
 ;;
 
-let of_c_repr c_repr =
-  [ (*$ List.iter all_but_encoding ~f:(fun { name; type_ = _} ->
-      printf "\n    `%s (C_repr.%s c_repr);" (String.capitalize_ascii name) name) *)
-    `Case_sensitive (C_repr.case_sensitive c_repr);
-    `Dot_nl (C_repr.dot_nl c_repr);
-    `Literal (C_repr.literal c_repr);
-    `Log_errors (C_repr.log_errors c_repr);
-    `Longest_match (C_repr.longest_match c_repr);
-    `Max_mem (C_repr.max_mem c_repr);
-    `Never_capture (C_repr.never_capture c_repr);
-    `Never_nl (C_repr.never_nl c_repr);
-    `One_line (C_repr.one_line c_repr);
-    `Perl_classes (C_repr.perl_classes c_repr);
-    `Posix_syntax (C_repr.posix_syntax c_repr);
-    `Word_boundary (C_repr.word_boundary c_repr);(*$*)
-    `Encoding_latin1 (Encoding.equal Latin1 (C_repr.encoding c_repr |> Encoding.of_c_repr));
-  ]
+let of_c_repr =
+  let f get _field () = get, () in
+  Fields.make_creator
+    (*$ List.iter all ~f:(fun {name; type_ = _} ->
+      if String.equal "encoding" name
+      then printf "\n\
+      ~encoding:(f (fun c_repr -> Encoding.of_c_repr (C_repr.encoding c_repr)))"
+      else printf "\n\
+      ~%s:(f C_repr.%s)" name name) *)
+    ~case_sensitive:(f C_repr.case_sensitive)
+    ~dot_nl:(f C_repr.dot_nl)
+    ~encoding:(f (fun c_repr -> Encoding.of_c_repr (C_repr.encoding c_repr)))
+    ~literal:(f C_repr.literal)
+    ~log_errors:(f C_repr.log_errors)
+    ~longest_match:(f C_repr.longest_match)
+    ~max_mem:(f C_repr.max_mem)
+    ~never_capture:(f C_repr.never_capture)
+    ~never_nl:(f C_repr.never_nl)
+    ~one_line:(f C_repr.one_line)
+    ~perl_classes:(f C_repr.perl_classes)
+    ~posix_syntax:(f C_repr.posix_syntax)
+    ~word_boundary:(f C_repr.word_boundary)(*$*)
+    ()
+  |> fst
 ;;
 
+let default = C_repr.create_quiet () |> of_c_repr
+
+let latin1 = { default with encoding = Latin1 }
+
+let noisy = { default with log_errors = true }
+
+let posix = { default with longest_match = true; posix_syntax = true }
+
 module Private = struct
-  let examples_for_testing =
-    let all_of_int = [ 10_000 ] in
-    let module T = struct
-      type t = [
-        | `Case_sensitive of bool
-        | `Dot_nl of bool
-        | `Encoding_latin1 of bool
-        | `Literal of bool
-        | `Log_errors of bool
-        | `Longest_match of bool
-        | `Max_mem of int
-        | `Never_capture of bool
-        | `Never_nl of bool
-        | `One_line of bool
-        | `Perl_classes of bool
-        | `Posix_syntax of bool
-        | `Word_boundary of bool
-      ]
-      [@@deriving enumerate]
-    end in
-    T.all
-  ;;
+  module C_repr = C_repr
+
+  let of_c_repr = of_c_repr
+  let to_c_repr = to_c_repr
 end

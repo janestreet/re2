@@ -44,10 +44,12 @@ module Body = struct
 
   let to_re2 ?(case_sensitive=true) t =
     let options =
-      [ `Case_sensitive case_sensitive
-      ; `Encoding_latin1 true
-      ; `Dot_nl true
-      ] in
+      { Options.default with
+        case_sensitive
+      ; encoding = Latin1
+      ; dot_nl = true
+      }
+    in
     let s = to_regex_string t in
     (* We created [t.regex_string] ourselves, so the syntax ought to be good. *)
     match Regex.create ~options s with

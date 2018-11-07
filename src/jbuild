@@ -11,7 +11,7 @@
 (alias
  ((name runtest)
   (deps (options.ml options.cinaps))
-  (action (bash "${bin:cinaps} ${<}"))))
+  (action (bash "${bin:cinaps} -styler ${bin:apply-style} ${<}"))))
 
 (alias
  ((name runtest)

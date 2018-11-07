@@ -1,39 +1,48 @@
 open! Core_kernel
 
-type t = [
-  | `Encoding_latin1 of bool
-  | `Posix_syntax of bool
-  | `Longest_match of bool
-  | `Log_errors of bool
-  | `Max_mem of int
-  | `Literal of bool
-  | `Never_nl of bool
-  | `Dot_nl of bool
-  | `Never_capture of bool
-  | `Case_sensitive of bool
-  | `Perl_classes of bool
-  | `Word_boundary of bool
-  | `One_line of bool
-]
-[@@deriving compare, sexp_of]
+(** See [re2_c/libre2/re2/re2.h] for documentation of these options. *)
 
-(** [ `Encoding_latin1 true ] *)
-val latin1 : t list
-
-(** [ `Posix_syntax true; `Longest_match true ] *)
-val posix : t list
-
-(** [ `Log_errors true ] *)
-val noisy : t list
-
-module C_repr : sig
-  type t
+module Encoding : sig
+  type t =
+    | Latin1
+    | Utf8
+  [@@deriving compare, sexp_of]
 end
 
-val to_c_repr : t list -> C_repr.t
+type t =
+  { case_sensitive : bool
+  ; dot_nl         : bool
+  ; encoding       : Encoding.t
+  ; literal        : bool
+  ; log_errors     : bool
+  ; longest_match  : bool
+  ; max_mem        : int
+  ; never_capture  : bool
+  ; never_nl       : bool
+  ; one_line       : bool
+  ; perl_classes   : bool
+  ; posix_syntax   : bool
+  ; word_boundary  : bool
+  }
+[@@deriving compare, sexp_of]
 
-val of_c_repr : C_repr.t -> t list
+val default : t
+
+(** [latin1 = { default with encoding = Latin1 }] *)
+val latin1 : t
+
+(** [noisy = { default with log_errors = true }] *)
+val noisy : t
+
+(** [posix = { default with longest_match = true; posix_syntax = true }] *)
+val posix : t
 
 module Private : sig
-  val examples_for_testing : t list
+  module C_repr : sig
+    type t
+  end
+
+  val to_c_repr : t -> C_repr.t
+
+  val of_c_repr : C_repr.t -> t
 end

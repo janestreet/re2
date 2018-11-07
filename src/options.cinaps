@@ -41,7 +41,3 @@ let all =
   ; { name = "word_boundary"; type_ = Type.bool }
   ]
 ;;
-
-let all_but_encoding =
-  List.filter all ~f:(fun { name; _} -> not (String.equal  "encoding" name))
-;;

@@ -23,8 +23,8 @@ efficiently. The syntax page gives full details. v}
       The failure mode is the search stops early, which isn't bad considering how rare
       internal null bytes are in practice.
 
-      The strings are considered in UTF-8 encoding by default or in
-      ISO 8859-1 if [Options.latin1] is used.
+      The strings are considered according to [Options.encoding] which is UTF-8 by
+      default (the alternative is ISO 8859-1).
   *)
 
   (** {6 Basic Types} *)
@@ -73,8 +73,8 @@ runs even faster if nmatch == 0. v}
 
   module Options = Options
 
-  val create     : ?options:Options.t list -> string -> t Or_error.t
-  val create_exn : ?options:Options.t list -> string -> t
+  val create     : ?options:Options.t -> string -> t Or_error.t
+  val create_exn : ?options:Options.t -> string -> t
 
   include Stringable with type t := t
 
@@ -88,8 +88,7 @@ runs even faster if nmatch == 0. v}
   (** [pattern t] returns the pattern from which the regex was constructed. *)
   val pattern : t -> string
 
-  (** [options t] expands out the default flags. *)
-  val options : t -> Options.t list
+  val options : t -> Options.t
 
   (** [find_all t input] a convenience function that returns all non-overlapping
       matches of [t] against [input], in left-to-right order.
@@ -268,8 +267,8 @@ runs even faster if nmatch == 0. v}
 
     (** [create ?options [ (pattern1, value1); (pattern2, value2); ...]] associates each
         [pattern] with its [value]. The same [options] are used for all patterns. *)
-    val create     : ?options:Options.t list -> (string * 'a) list -> 'a t Or_error.t
-    val create_exn : ?options:Options.t list -> (string * 'a) list -> 'a t
+    val create     : ?options:Options.t -> (string * 'a) list -> 'a t Or_error.t
+    val create_exn : ?options:Options.t -> (string * 'a) list -> 'a t
 
     (** [matches t input] returns the values associated with those patterns that match the
         [input]. Values are in the order that [create] saw them. *)
