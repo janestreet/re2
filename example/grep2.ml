@@ -1,8 +1,5 @@
 open StdLabels
 
-let underline_on = Format.sprintf "%c[4m" (Char.chr 27)
-let underline_off = Format.sprintf "%c[24m" (Char.chr 27)
-
 let usage = Format.sprintf "%s [options] pattern" (Array.get Sys.argv 0)
 
 let pattern = ref ""
