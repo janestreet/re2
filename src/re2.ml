@@ -1,9 +1,6 @@
 include Regex
 module Parser = Parser
 
-(* Required for jane-script auto-loading *)
-let () = Re2_c.linkme
-
 module Std = struct
   module Parser = Parser
   module Re2 = Regex
