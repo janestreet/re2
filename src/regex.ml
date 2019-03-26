@@ -133,7 +133,7 @@ let index_of_id_exn t = function
 
 module Match = struct
   type t = {
-    rex      : regex sexp_opaque;
+    rex      : (regex [@sexp.opaque]);
     input    : string;
     captures : (int * int) option array;
   } [@@deriving sexp_of]
