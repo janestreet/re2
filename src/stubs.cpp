@@ -155,7 +155,10 @@ extern "C" {
     mlre2__custom_regex_serialize,
     mlre2__custom_regex_deserialize,
 #ifdef custom_compare_ext_default
-    custom_compare_ext_default
+    custom_compare_ext_default,
+#endif
+#ifdef custom_fixed_length_default
+    custom_fixed_length_default,
 #endif
   };
 
@@ -171,7 +174,10 @@ extern "C" {
     custom_serialize_default,
     custom_deserialize_default,
 #ifdef custom_compare_ext_default
-    custom_compare_ext_default
+    custom_compare_ext_default,
+#endif
+#ifdef custom_fixed_length_default
+    custom_fixed_length_default,
 #endif
   };
 
@@ -187,7 +193,10 @@ extern "C" {
     custom_serialize_default,
     custom_deserialize_default,
 #ifdef custom_compare_ext_default
-    custom_compare_ext_default
+    custom_compare_ext_default,
+#endif
+#ifdef custom_fixed_length_default
+    custom_fixed_length_default,
 #endif
   };
 
