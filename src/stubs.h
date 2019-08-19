@@ -92,7 +92,7 @@ extern "C" {
 
   /** Some CINAPS templating to declare the getters and setters for options fields. */
 
-  /*$ #use "options.cinaps";;
+  /*$ open Re2_options_cinaps;;
    List.iter all ~f:(fun { name; _} ->
    printf "\n  \
    extern value mlre2__options__%s(value v_options);\n  \

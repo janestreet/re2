@@ -1,7 +1,6 @@
 open Core_kernel
 
 module type S = sig
-
   (** A value of type ['a t] is a regex that parses ['a]s.
       The matching is implemented using Re2.
 
@@ -11,17 +10,20 @@ module type S = sig
 
   (** [case_sensitive] defaults to [true]. *)
   val compile : ?case_sensitive:bool -> 'a t -> (string -> 'a option) Staged.t
-  val run     : ?case_sensitive:bool -> 'a t ->  string -> 'a option
-  val matches : ?case_sensitive:bool -> 'a t ->  string -> bool
+
+  val run : ?case_sensitive:bool -> 'a t -> string -> 'a option
+  val matches : ?case_sensitive:bool -> 'a t -> string -> bool
 
   (** [to_regex_string] and [to_re2] both forget what a ['a t] knows
       about turning the matching strings into ['a]s *)
   val to_regex_string : _ t -> string
+
   val to_re2 : ?case_sensitive:bool -> _ t -> Regex.t
 
   (** The applicative interface provides sequencing, e.g. [both a b] is a regex that
       parses an [a] followed by a [b] and returns both results in a pair. *)
-  include Applicative.S with type 'a t := 'a t
+  include
+    Applicative.S with type 'a t := 'a t
 
   (** [of_re2 r] forgets the options that [r] was compiled with, instead using
       [`Encoding_latin1 true], [`Dot_nl true], and the case-sensitivity setting of the
@@ -63,12 +65,7 @@ module type S = sig
       doesn't give you access to repeated submatches like that. Hence, [repeat] ignores
       all submatches of its argument and does not call any callbacks that may have been
       attached to them, as if it had [ignore] called on its result. *)
-  val repeat
-    :  ?greedy:bool
-    -> ?min:int
-    -> ?max:int option
-    -> unit t
-    -> unit t
+  val repeat : ?greedy:bool -> ?min:int -> ?max:int option -> unit t -> unit t
 
   (** [times r n] essentially constructs the regex [r{n}]. It is equivalent to
       [repeat ~min:n ~max:(Some n) r].
@@ -78,7 +75,6 @@ module type S = sig
   val times : unit t -> int -> unit t
 
   val string : string -> unit t
-
   val any_string : string t
 
   (** Matches empty string at the beginning of the text *)
@@ -96,7 +92,8 @@ module type S = sig
     val any : char t
 
     (** Duplicates in the lists given to [one_of] and [not_one_of] are ignored. *)
-    val one_of     : char list -> char t
+    val one_of : char list -> char t
+
     val not_one_of : char list -> char t
 
     (** The following 6 values match the Re2 character classes with the same name. *)
@@ -121,7 +118,6 @@ module type S = sig
   end
 
   module Decimal : sig
-
     val digit : int t
 
     (** optional sign symbol:
@@ -133,14 +129,19 @@ module type S = sig
     val unsigned : int t
     val int : int t
   end
-
 end
 
 module type Parser = sig
   type 'a t
-  module Open_on_rhs_intf : sig module type S = S with type 'a t = 'a t end
-  include Applicative.Let_syntax
+
+  module Open_on_rhs_intf : sig
+    module type S = S with type 'a t = 'a t
+  end
+
+  include
+    Applicative.Let_syntax
     with type 'a t := 'a t
     with module Open_on_rhs_intf := Open_on_rhs_intf
+
   include Open_on_rhs_intf.S with type 'a t := 'a t
 end

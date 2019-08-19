@@ -11,13 +11,14 @@ module Type = struct
     }
 
   let bool = { ocaml_type = "bool"; value_of_c = "Val_bool"; value_to_c = "Bool_val" }
-
   let int = { ocaml_type = "int"; value_of_c = "Val_int"; value_to_c = "Int_val" }
 
   let encoding =
     { ocaml_type = "Encoding.C_repr.t"
     ; value_of_c = "Val_int"
-    ; value_to_c = "static_cast<RE2::Options::Encoding>Int_val"}
+    ; value_to_c = "static_cast<RE2::Options::Encoding>Int_val"
+    }
+  ;;
 end
 
 type t =

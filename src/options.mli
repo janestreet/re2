@@ -11,18 +11,18 @@ end
 
 type t =
   { case_sensitive : bool
-  ; dot_nl         : bool
-  ; encoding       : Encoding.t
-  ; literal        : bool
-  ; log_errors     : bool
-  ; longest_match  : bool
-  ; max_mem        : int
-  ; never_capture  : bool
-  ; never_nl       : bool
-  ; one_line       : bool
-  ; perl_classes   : bool
-  ; posix_syntax   : bool
-  ; word_boundary  : bool
+  ; dot_nl : bool
+  ; encoding : Encoding.t
+  ; literal : bool
+  ; log_errors : bool
+  ; longest_match : bool
+  ; max_mem : int
+  ; never_capture : bool
+  ; never_nl : bool
+  ; one_line : bool
+  ; perl_classes : bool
+  ; posix_syntax : bool
+  ; word_boundary : bool
   }
 [@@deriving compare, sexp_of]
 
@@ -43,6 +43,5 @@ module Private : sig
   end
 
   val to_c_repr : t -> C_repr.t
-
   val of_c_repr : C_repr.t -> t
 end

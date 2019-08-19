@@ -1,7 +1,6 @@
 open Core_kernel
 
 module type S = sig
-
   (** These are OCaml bindings for Google's re2 library.  Quoting from the re2 homepage:
 
       {v
@@ -34,7 +33,10 @@ efficiently. The syntax page gives full details. v}
 
   (** Subpatterns are referenced by name if labelled with the [/(?P<...>...)/] syntax, or
       else by counting open-parens, with subpattern zero referring to the whole regex. *)
-  type id_t = [ `Index of int | `Name of string ]
+  type id_t =
+    [ `Index of int
+    | `Name of string
+    ]
 
   (** [index_of_id t id] resolves subpattern names and indices into indices. **)
   val index_of_id_exn : t -> id_t -> int
@@ -70,10 +72,9 @@ runs even faster if nmatch == 0. v}
       [~sub] to be non-negative.
   *)
 
-
   module Options = Options
 
-  val create     : ?options:Options.t -> string -> t Or_error.t
+  val create : ?options:Options.t -> string -> t Or_error.t
   val create_exn : ?options:Options.t -> string -> t
 
   include Stringable with type t := t
@@ -95,19 +96,23 @@ runs even faster if nmatch == 0. v}
 
       If [sub] is given, and the requested subpattern did not capture, then no match is
       returned at that position even if other parts of the regex did match. *)
-  val find_all     : ?sub:id_t -> t -> string -> string list Or_error.t
+  val find_all : ?sub:id_t -> t -> string -> string list Or_error.t
+
   val find_all_exn : ?sub:id_t -> t -> string -> string list
 
   (** [find_first ?sub pattern input] finds the first match of [pattern] in [input], and
       returns the subpattern specified by [sub], or an error if the subpattern didn't
       capture. *)
-  val find_first     : ?sub:id_t -> t -> string -> string Or_error.t
+  val find_first : ?sub:id_t -> t -> string -> string Or_error.t
+
   val find_first_exn : ?sub:id_t -> t -> string -> string
+
 
   (** [find_submatches t input] finds the first match and returns all submatches.
       Element 0 is the whole match and element 1 is the first parenthesized submatch, etc.
   *)
-  val find_submatches     : t -> string -> string option array Or_error.t
+  val find_submatches : t -> string -> string option array Or_error.t
+
   val find_submatches_exn : t -> string -> string option array
 
   (** [matches pattern input] @return true iff [pattern] matches [input] *)
@@ -124,12 +129,7 @@ runs even faster if nmatch == 0. v}
 
       If [t] never matches, the returned list has [input] as its one element.
   *)
-  val split :
-    ?max:int
-    -> ?include_matches:bool
-    -> t
-    -> string
-    -> string list
+  val split : ?max:int -> ?include_matches:bool -> t -> string -> string list
 
   (** [rewrite pattern ~template input] is a convenience function for [replace]:
       Instead of requiring an arbitrary transformation as a function, it accepts a
@@ -137,12 +137,13 @@ runs even faster if nmatch == 0. v}
       which will be replaced by submatch [n].  For every match of [pattern]
       against [input], the template will be specialized and then substituted for
       the matched substring. *)
-  val rewrite     : t -> template:string -> string -> string Or_error.t
+  val rewrite : t -> template:string -> string -> string Or_error.t
+
   val rewrite_exn : t -> template:string -> string -> string
 
   (** [valid_rewrite_template pattern ~template] returns [true] iff [template] is a
       valid rewrite template for [pattern] *)
-  val valid_rewrite_template        : t -> template:string -> bool
+  val valid_rewrite_template : t -> template:string -> bool
 
   (** [escape nonregex] returns a copy of [nonregex] with everything escaped (i.e.,
       if the return value were t to regex, it would match exactly the
@@ -153,7 +154,7 @@ runs even faster if nmatch == 0. v}
 
   module Infix : sig
     (** [input =~ pattern] an infix alias of [matches] *)
-    val (=~)  : string -> t -> bool
+    val ( =~ ) : string -> t -> bool
   end
 
   (** {6 Complicated Interface} *)
@@ -172,7 +173,8 @@ runs even faster if nmatch == 0. v}
     (** If location information has been omitted (e.g., via [~sub]), the error returned is
         [Regex_no_such_subpattern], just as though that subpattern were never defined.
     *)
-    val get     : sub:id_t -> t -> string option
+    val get : sub:id_t -> t -> string option
+
     val get_exn : sub:id_t -> t -> string
 
     (** [get_all t] returns all available matches as strings in an array.  For the
@@ -183,8 +185,9 @@ runs even faster if nmatch == 0. v}
         variable-width encodings (e.g., UTF-8) this may not be the same as the character
         offset and character length.
     *)
-    val get_pos_exn : sub:id_t -> t -> (int * int)
+    val get_pos_exn : sub:id_t -> t -> int * int
   end
+
 
   (** [get_matches pattern input] returns all non-overlapping matches of [pattern]
       against [input]
@@ -193,28 +196,14 @@ runs even faster if nmatch == 0. v}
       @param sub (default: all) returned Match.t's will contain only the first [sub]
       matches.
   *)
-  val get_matches
-    : ?sub:id_t
-    -> ?max:int
-    -> t
-    -> string
-    -> Match.t list Or_error.t
+  val get_matches : ?sub:id_t -> ?max:int -> t -> string -> Match.t list Or_error.t
 
-  val get_matches_exn
-    : ?sub:id_t
-    -> ?max:int
-    -> t
-    -> string
-    -> Match.t list
-
-  val to_sequence_exn
-    : ?sub:id_t
-    -> t
-    -> string
-    -> Match.t Sequence.t
+  val get_matches_exn : ?sub:id_t -> ?max:int -> t -> string -> Match.t list
+  val to_sequence_exn : ?sub:id_t -> t -> string -> Match.t Sequence.t
 
   (** [first_match pattern input] @return the first match iff [pattern] matches [input] *)
   val first_match : t -> string -> Match.t Or_error.t
+
   val first_match_exn : t -> string -> Match.t
 
   (** [replace ?sub ?max ~f pattern input] @return an edited copy of [input] with every
@@ -267,7 +256,8 @@ runs even faster if nmatch == 0. v}
 
     (** [create ?options [ (pattern1, value1); (pattern2, value2); ...]] associates each
         [pattern] with its [value]. The same [options] are used for all patterns. *)
-    val create     : ?options:Options.t -> (string * 'a) list -> 'a t Or_error.t
+    val create : ?options:Options.t -> (string * 'a) list -> 'a t Or_error.t
+
     val create_exn : ?options:Options.t -> (string * 'a) list -> 'a t
 
     (** [matches t input] returns the values associated with those patterns that match the
@@ -277,5 +267,4 @@ runs even faster if nmatch == 0. v}
     (** Like [matches], but values are listed in unspecified order. *)
     val matches_no_order : 'a t -> string -> 'a list
   end
-
 end

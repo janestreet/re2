@@ -529,7 +529,7 @@ extern "C" {
     CAMLreturn(res);
   }
 
-  /*$ #use "options.cinaps";;
+  /*$ open Re2_options_cinaps;;
     List.iter all ~f:(fun { name; type_ = { value_of_c; value_to_c; _} } ->
     printf "\n  \
     CAMLprim value mlre2__options__%s(value v_options) {\n    \
