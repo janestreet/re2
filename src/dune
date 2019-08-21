@@ -2,7 +2,7 @@
  (libraries core_kernel re2_c core_kernel.rope)
  (c_library_flags :standard -lstdc++ -lpthread) (cxx_names stubs)
  (cxx_flags (:standard \ -pedantic) (-I re2_c/libre2))
- (preprocess (pps ppx_jane -allow-unannotated-ignores -check-doc-comments)))
+ (preprocess (pps ppx_jane -check-doc-comments)))
 
 (rule (targets explicit_dependencies.ml explicit_dependencies.mli)
  (deps %{workspace_root}/bin/gen-explicit-dependencies.sh)

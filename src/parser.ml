@@ -75,7 +75,7 @@ module Body = struct
 
   let run ?case_sensitive t = Staged.unstage (compile ?case_sensitive t)
 
-  let ignore t =
+  let ignore_m t =
     { regex_string = t.regex_string
     ; num_submatches = t.num_submatches
     ; to_result = (fun _ _ -> ())
@@ -83,7 +83,7 @@ module Body = struct
   ;;
 
   let matches ?case_sensitive t =
-    let r = to_re2 ?case_sensitive (ignore t) in
+    let r = to_re2 ?case_sensitive (ignore_m t) in
     fun input -> Regex.matches r input
   ;;
 
@@ -187,7 +187,7 @@ module Body = struct
     should_match
       [%sexp_of: string * string]
       (both
-         (capture (string "a") <* ignore (capture (string "b")))
+         (capture (string "a") <* ignore_m (capture (string "b")))
          (capture (string "c")))
       "abc"
       ("a", "c")
@@ -241,7 +241,7 @@ module Body = struct
 
   let%test_unit _ =
     should_match_string
-      (ignore (or_ [ string "a"; string "b" ]) *> capture (string "c"))
+      (ignore_m (or_ [ string "a"; string "b" ]) *> capture (string "c"))
       "ac"
       "c"
   ;;
@@ -297,7 +297,7 @@ module Body = struct
     | 0, Some 1 -> with_quantity t ~greedy ~quantity:"?"
     (* silly cases *)
     | 0, Some 0 -> of_captureless_string ""
-    | 1, Some 1 -> ignore t
+    | 1, Some 1 -> ignore_m t
     (* actual cases *)
     | min, None -> with_quantity t ~greedy ~quantity:(sprintf "{%d,}" min)
     | min, Some max ->
@@ -434,10 +434,10 @@ module Body = struct
       ;;
 
       let%test_unit "messing with options" =
-        should_match_unit (ignore (mk "abc(?i)def")) "abcDEF";
+        should_match_unit (ignore_m (mk "abc(?i)def")) "abcDEF";
         match_only_if_case_insensitive
           sexp_of_string
-          (capture (string "abc" *> ignore (mk "(?i)") *> string "def"))
+          (capture (string "abc" *> ignore_m (mk "(?i)") *> string "def"))
           "abcDEF"
           "abcDEF";
         should_not_match (mk "(?-i)abcdef") "abcDEF"
@@ -448,8 +448,8 @@ module Body = struct
   let%test_unit _ =
     let r = of_re2 (Regex.create_exn "a|b") in
     let rs =
-      [ start_of_input *> ignore (r <* string "x") <* end_of_input
-      ; start_of_input *> ignore (capture (ignore (r <* string "x"))) <* end_of_input
+      [ start_of_input *> ignore_m (r <* string "x") <* end_of_input
+      ; start_of_input *> ignore_m (capture (ignore_m (r <* string "x"))) <* end_of_input
       ]
     in
     List.iter rs ~f:(fun r ->
@@ -544,7 +544,7 @@ module Body = struct
 
         let%test_unit _ =
           should_match_string
-            (capture (ignore (all [ any; one_of [ '^' ]; any ])))
+            (capture (ignore_m (all [ any; one_of [ '^' ]; any ])))
             "a^c"
             "a^c"
         ;;
@@ -589,7 +589,7 @@ module Body = struct
     let%test_unit _ = should_match Int.sexp_of_t int "42" 42
   end
 
-  let any_string = capture (repeat (ignore Char.any))
+  let any_string = capture (repeat (ignore_m Char.any))
 
   let%bench_module "big regex" =
     (module struct

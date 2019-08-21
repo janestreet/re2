@@ -77,7 +77,7 @@ module Exceptions = struct
   (** [Regex_rewrite_template_invalid (template, error_msg)] *)
   exception Regex_rewrite_template_invalid of string * string
 
-  let _ =
+  let () =
     (* register exceptions *)
     Callback.register_exception
       "mlre2__Regex_no_such_subpattern"

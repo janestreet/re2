@@ -35,11 +35,11 @@ module type S = sig
       you want that, just use [capture]). Named captures are not accessible by name. *)
   val of_re2 : Regex.t -> string option array t
 
-  (** [ignore t] is a regex which matches the same strings that [t] matches, but doesn't
+  (** [ignore_m t] is a regex which matches the same strings that [t] matches, but doesn't
       call functions on the captured submatches. Particularly, something like [ignore (map
       (string "x") ~f:Int.of_string)] won't raise an exception, because the int conversion
       is never attempted.  *)
-  val ignore : _ t -> unit t
+  val ignore_m : _ t -> unit t
 
   (** [capture t] returns the string matched by [t] *)
   val capture : unit t -> string t
