@@ -7,6 +7,8 @@
  * "The New C: X Macros" by Randy Meyers, Dr. Dobb's, 01 May 2001,
  * retrieved 11 Sep 2012 from drdobbs.com/184401387
  */
+/* Archived on Wayback Machine:
+   https://web.archive.org/web/20120124013533/http://drdobbs.com/184401387 */
 /* All the macros have three standard arguments:
    - first letter of upper-case identifier: to generate ML variants
    - first letter of lower-case identifier: to concatenate into C++ method calls
