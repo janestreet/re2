@@ -203,8 +203,6 @@ extern "C" {
   CAMLprim value mlre2__init(value unit) {
     (void) unit;
     caml_register_custom_operations(&mlre2__custom_regex_ops);
-    caml_register_custom_operations(&mlre2__custom_regex_multiple_ops);
-    caml_register_custom_operations(&mlre2__custom_regex_options_ops);
     return Val_unit;
   }
 
