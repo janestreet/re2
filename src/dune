@@ -14,5 +14,5 @@
  (action (bash "%{bin:cinaps} %{first_dep}")))
 
 (rule (targets explicit_dependencies.ml explicit_dependencies.mli)
- (deps %{workspace_root}/bin/gen-explicit-dependencies.sh)
+ (mode fallback) (deps %{workspace_root}/bin/gen-explicit-dependencies.sh)
  (action (bash "%{deps} re2_c")))
