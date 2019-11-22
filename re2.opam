@@ -13,12 +13,9 @@ depends: [
   "ocaml" {>= "4.08.0"}
   "core_kernel"
   "ppx_jane"
+  "conf-g++"    {build}
   "dune"        {>= "1.5.1"}
 ]
 synopsis: "OCaml bindings for RE2, Google's regular expression library"
 description: "
 "
-depexts: [
- [ ["fedora"] ["gcc-c++"] ]
- [ ["oraclelinux"] ["gcc-c++"] ]
-]
