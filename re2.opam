@@ -14,7 +14,7 @@ depends: [
   "core_kernel"
   "ppx_jane"
   "conf-g++"    {build}
-  "dune"        {>= "1.5.1"}
+  "dune"        {>= "2.0.0"}
 ]
 synopsis: "OCaml bindings for RE2, Google's regular expression library"
 description: "
