@@ -118,7 +118,7 @@ module T = struct
   let to_string = to_string
 end
 
-include Binable.Of_stringable (T)
+include Binable.Of_stringable_without_uuid [@alert "-legacy"] (T)
 include Sexpable.Of_stringable (T)
 
 let compare t1 t2 = String.compare (to_string t1) (to_string t2)
