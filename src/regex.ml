@@ -401,7 +401,12 @@ let%test_module _ =
       match get_matches_exn re "XYZ" with
       | [ the_match ] ->
         [%test_eq: int * int] (0, 0) (Match.get_pos_exn ~sub:(`Index 0) the_match)
-      | other -> failwiths "expected exactly one match" other [%sexp_of: Match.t list]
+      | other ->
+        failwiths
+          ~here:[%here]
+          "expected exactly one match"
+          other
+          [%sexp_of: Match.t list]
     ;;
 
     let%test_unit _ =
