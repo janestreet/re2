@@ -56,15 +56,7 @@ type t =
 module C_repr = struct
   type t
 
-  (*$ open Re2_options_cinaps ;;
-    List.iter all ~f:(fun { name; type_ = { ocaml_type; _} } ->
-    printf "\n  external %s : t -> %s = \"mlre2__options__%s\" [@@noalloc]\n"
-    name ocaml_type name;
-    printf "  external set_%s : t -> %s -> unit = \"mlre2__options__set_%s\" [@@noalloc]\n"
-    name ocaml_type name);
-
-    printf "  "
-  *)
+  (*$ Re2_options_cinaps.print_c_repr_external_bindings ();; *)
   external case_sensitive : t -> bool = "mlre2__options__case_sensitive" [@@noalloc]
 
   external set_case_sensitive : t -> bool -> unit = "mlre2__options__set_case_sensitive"
@@ -124,14 +116,7 @@ let to_c_repr t =
   let c_repr = C_repr.create_quiet () in
   let f set _field _t value = set c_repr value in
   Fields.Direct.iter
-    t
-    (*$ List.iter all ~f:(fun { name; type_ = _} ->
-      if String.equal "encoding" name
-      then printf "\n\
-      ~encoding:(f (fun c_repr value -> \
-      C_repr.set_encoding c_repr (Encoding.to_c_repr value)))"
-      else printf "\n\
-      ~%s:(f C_repr.set_%s)" name name) *)
+    t (*$ Re2_options_cinaps.print_to_c_repr_fields ();; *)
     ~case_sensitive:(f C_repr.set_case_sensitive)
     ~dot_nl:(f C_repr.set_dot_nl)
     ~encoding:
@@ -152,13 +137,7 @@ let to_c_repr t =
 
 let of_c_repr =
   let f get _field () = get, () in
-  Fields.make_creator
-    (*$ List.iter all ~f:(fun {name; type_ = _} ->
-      if String.equal "encoding" name
-      then printf "\n\
-      ~encoding:(f (fun c_repr -> Encoding.of_c_repr (C_repr.encoding c_repr)))"
-      else printf "\n\
-      ~%s:(f C_repr.%s)" name name) *)
+  Fields.make_creator (*$ Re2_options_cinaps.print_of_c_repr_fields ();; *)
     ~case_sensitive:(f C_repr.case_sensitive)
     ~dot_nl:(f C_repr.dot_nl)
     ~encoding:(f (fun c_repr -> Encoding.of_c_repr (C_repr.encoding c_repr)))

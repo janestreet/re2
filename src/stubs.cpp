@@ -527,21 +527,7 @@ extern "C" {
     CAMLreturn(res);
   }
 
-  /*$ open Re2_options_cinaps;;
-    List.iter all ~f:(fun { name; type_ = { value_of_c; value_to_c; _} } ->
-    printf "\n  \
-    CAMLprim value mlre2__options__%s(value v_options) {\n    \
-    CAMLparam1(v_options);\n    \
-    RE2::Options *options = RegexOptions_val(v_options);\n    \
-    CAMLreturn(%s(options->%s()));\n  \
-    }\n\
-    \n  \
-    CAMLprim value mlre2__options__set_%s(value v_options, value v_value) {\n    \
-    CAMLparam2(v_options, v_value);\n    \
-    RE2::Options *options = RegexOptions_val(v_options);\n    \
-    options->set_%s(%s(v_value));\n    \
-    CAMLreturn(Val_unit);\n  \
-    }\n" name value_of_c name name name value_to_c); */
+/*$ Re2_options_cinaps.print_c_stubs ();; */
   CAMLprim value mlre2__options__case_sensitive(value v_options) {
     CAMLparam1(v_options);
     RE2::Options *options = RegexOptions_val(v_options);

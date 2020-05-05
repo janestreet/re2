@@ -92,38 +92,46 @@ extern "C" {
 
   /** Some CINAPS templating to declare the getters and setters for options fields. */
 
-  /*$ open Re2_options_cinaps;;
-   List.iter all ~f:(fun { name; _} ->
-   printf "\n  \
-   extern value mlre2__options__%s(value v_options);\n  \
-   extern value mlre2__options__set_%s(value v_options, value v_value);" name name);;
-  */
+/*$ Re2_options_cinaps.print_c_prototypes ();; */
   extern value mlre2__options__case_sensitive(value v_options);
   extern value mlre2__options__set_case_sensitive(value v_options, value v_value);
+
   extern value mlre2__options__dot_nl(value v_options);
   extern value mlre2__options__set_dot_nl(value v_options, value v_value);
+
   extern value mlre2__options__encoding(value v_options);
   extern value mlre2__options__set_encoding(value v_options, value v_value);
+
   extern value mlre2__options__literal(value v_options);
   extern value mlre2__options__set_literal(value v_options, value v_value);
+
   extern value mlre2__options__log_errors(value v_options);
   extern value mlre2__options__set_log_errors(value v_options, value v_value);
+
   extern value mlre2__options__longest_match(value v_options);
   extern value mlre2__options__set_longest_match(value v_options, value v_value);
+
   extern value mlre2__options__max_mem(value v_options);
   extern value mlre2__options__set_max_mem(value v_options, value v_value);
+
   extern value mlre2__options__never_capture(value v_options);
   extern value mlre2__options__set_never_capture(value v_options, value v_value);
+
   extern value mlre2__options__never_nl(value v_options);
   extern value mlre2__options__set_never_nl(value v_options, value v_value);
+
   extern value mlre2__options__one_line(value v_options);
   extern value mlre2__options__set_one_line(value v_options, value v_value);
+
   extern value mlre2__options__perl_classes(value v_options);
   extern value mlre2__options__set_perl_classes(value v_options, value v_value);
+
   extern value mlre2__options__posix_syntax(value v_options);
   extern value mlre2__options__set_posix_syntax(value v_options, value v_value);
+
   extern value mlre2__options__word_boundary(value v_options);
-  extern value mlre2__options__set_word_boundary(value v_options, value v_value);/*$*/
+  extern value mlre2__options__set_word_boundary(value v_options, value v_value);
+/*$*/
 
   extern value mlre2__options__create_quiet(value unit);
   /** The quiet Options constructor, in a custom block */
