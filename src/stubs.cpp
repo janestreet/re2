@@ -61,6 +61,7 @@ extern "C" {
 #include <caml/intext.h>
 #include <caml/custom.h>
 
+#include "ocaml_utils.h"
 #include "util.h"
 
   void mlre2__custom_regex_finalize(value v_obj) {

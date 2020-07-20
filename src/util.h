@@ -3,8 +3,6 @@
 
 /* must be #include'ed inside an extern "C" { } block */
 
-#define Val_none (Val_int(0))
-
 #define Regex_val(v) (*(RE2 **) Data_custom_val(v))
 #define RegexSet_val(v) (*(RE2::Set **) Data_custom_val(v))
 #define RegexOptions_val(v) (*(RE2::Options **) Data_custom_val(v))
