@@ -16,10 +16,7 @@ module Body = struct
       }
 
     let return x =
-      { regex_string = Rope.of_string ""
-      ; num_submatches = 0
-      ; to_result = (fun _ _ -> x)
-      }
+      { regex_string = Rope.of_string ""; num_submatches = 0; to_result = (fun _ _ -> x) }
     ;;
 
     let map =
@@ -226,10 +223,7 @@ module Body = struct
     should_match_string (or_ [ capture (string "a"); capture (string "b") ]) "a" "a"
   ;;
 
-  let%test_unit _ =
-    should_match_string (capture (or_ [ string "a"; string "b" ])) "a" "a"
-  ;;
-
+  let%test_unit _ = should_match_string (capture (or_ [ string "a"; string "b" ])) "a" "a"
   let%test_unit _ = should_not_match (or_ [ string "a"; string "b" ]) "c"
 
   let%test_unit _ =
@@ -505,8 +499,7 @@ module Body = struct
       | [] -> fail
       | [ x ] -> capture_char (string (String.of_char x))
       | chars ->
-        capture_char
-          (of_captureless_string ("[" ^ char_list_to_regex_string chars ^ "]"))
+        capture_char (of_captureless_string ("[" ^ char_list_to_regex_string chars ^ "]"))
     ;;
 
     let not_one_of = function

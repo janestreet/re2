@@ -22,8 +22,7 @@ module type S = sig
 
   (** The applicative interface provides sequencing, e.g. [both a b] is a regex that
       parses an [a] followed by a [b] and returns both results in a pair. *)
-  include
-    Applicative.S with type 'a t := 'a t
+  include Applicative.S with type 'a t := 'a t
 
   (** [of_re2 r] forgets the options that [r] was compiled with, instead using
       [`Encoding_latin1 true], [`Dot_nl true], and the case-sensitivity setting of the
