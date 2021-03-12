@@ -10,13 +10,13 @@
    \nARFLAGS=rsc\
    \nCXXFLAGS=\"-Wall -O3 -g -pthread\"\
    \nif [ FreeBSD = `uname -s` ]; then\
-   \n       CXX=clang++\
-   \n       CXXFLAGS=\"$CXXFLAGS -I /usr/local/lib/re2\"\
+   \n     CXX=clang++\
+   \n     CXXFLAGS=\"$CXXFLAGS -I /usr/local/lib/re2\"\
    \nelse\
-   \n       CXX=g++\
+   \n     CXX=g++\
    \nfi\
    \nif ! %{arch_sixtyfour}; then\
-   \n  CXX=\"$CXX -m32\"\
+   \nCXX=\"$CXX -m32\"\
    \nfi\
    \n%{make} -s -C libre2 clean\
    \n%{make} -s -C libre2 ARFLAGS=\"$ARFLAGS\" CXX=\"$CXX\" CXXFLAGS=\"$CXXFLAGS\" obj/libre2.a obj/so/libre2.so\

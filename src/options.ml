@@ -1,7 +1,64 @@
+module Stable0 = struct
+  open! Core_kernel.Core_kernel_stable
+
+  module Encoding = struct
+    module V1 = struct
+      type t =
+        | Latin1
+        | Utf8
+      [@@deriving bin_io, compare, hash, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| bf67b13f243e7b82146959041854651d |}]
+      ;;
+    end
+  end
+
+  (* This [Serialization.t] is the serialization of [t] and it's slightly
+     different from [t]:
+     - Serialization.t has [case_insensitive] instead of [case_sensitive], since
+       Re2.Options.default has [case_sensitive] as the only field that is [true].
+       By using [case_insensitive] we have the nice property where default representation
+       has all bool as false (and an empty sexp).
+     - [max_mem] is stripped (and populated with default) during
+       serialisation, since I don't think it makes sense to serialise this
+     - it seems that some parameters in Re2.Options.t have implied values,
+       so there might be room for improvement of this [t] (at the cost of
+       more complex code here); for example posix_syntax=false implies that
+       some of the other parameters are actually ignored
+  *)
+  module V2 = struct
+    module Serialization = struct
+      type t =
+        { case_insensitive : bool [@sexp.bool]
+        ; dot_nl : bool [@sexp.bool]
+        ; encoding : Encoding.V1.t
+                     [@sexp.default Encoding.V1.Utf8] [@sexp_drop_default.compare]
+        ; literal : bool [@sexp.bool]
+        ; log_errors : bool [@sexp.bool]
+        ; longest_match : bool [@sexp.bool]
+        ; never_capture : bool [@sexp.bool]
+        ; never_nl : bool [@sexp.bool]
+        ; one_line : bool [@sexp.bool]
+        ; perl_classes : bool [@sexp.bool]
+        ; posix_syntax : bool [@sexp.bool]
+        ; word_boundary : bool [@sexp.bool]
+        }
+      [@@deriving bin_io, compare, hash, sexp]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 7e4458318a614214b63cb4b98577c10a |}]
+      ;;
+    end
+  end
+end
+
 open! Core_kernel
 
 module Encoding = struct
-  type t =
+  type t = Stable0.Encoding.V1.t =
     | Latin1
     | Utf8
   [@@deriving compare, equal, sexp_of]
@@ -157,10 +214,124 @@ let default = C_repr.create_quiet () |> of_c_repr
 let latin1 = { default with encoding = Latin1 }
 let noisy = { default with log_errors = true }
 let posix = { default with longest_match = true; posix_syntax = true }
+let default_max_mem = max_mem default
 
 module Private = struct
   module C_repr = C_repr
 
   let of_c_repr = of_c_repr
   let to_c_repr = to_c_repr
+end
+
+module Stable = struct
+  include Stable0
+
+  module V2 = struct
+    module Serialization = V2.Serialization
+
+    type nonrec t = t =
+      { case_sensitive : bool
+      ; dot_nl : bool
+      ; encoding : Encoding.V1.t
+      ; literal : bool
+      ; log_errors : bool
+      ; longest_match : bool
+      ; max_mem : int
+      ; never_capture : bool
+      ; never_nl : bool
+      ; one_line : bool
+      ; perl_classes : bool
+      ; posix_syntax : bool
+      ; word_boundary : bool
+      }
+    [@@deriving compare, hash]
+
+    let to_serialization
+          { case_sensitive
+          ; dot_nl
+          ; encoding
+          ; literal
+          ; log_errors
+          ; longest_match
+          ; max_mem = _
+          ; never_capture
+          ; never_nl
+          ; one_line
+          ; perl_classes
+          ; posix_syntax
+          ; word_boundary
+          }
+      : Serialization.t
+      =
+      { case_insensitive = not case_sensitive
+      ; dot_nl
+      ; encoding
+      ; literal
+      ; log_errors
+      ; longest_match
+      ; never_capture
+      ; never_nl
+      ; one_line
+      ; perl_classes
+      ; posix_syntax
+      ; word_boundary
+      }
+    ;;
+
+    let of_serialization
+          ({ case_insensitive
+           ; dot_nl
+           ; encoding
+           ; literal
+           ; log_errors
+           ; longest_match
+           ; never_capture
+           ; never_nl
+           ; one_line
+           ; perl_classes
+           ; posix_syntax
+           ; word_boundary
+           } :
+             Serialization.t)
+      =
+      { case_sensitive = not case_insensitive
+      ; dot_nl
+      ; encoding
+      ; literal
+      ; log_errors
+      ; longest_match
+      ; max_mem = default_max_mem
+      ; never_capture
+      ; never_nl
+      ; one_line
+      ; perl_classes
+      ; posix_syntax
+      ; word_boundary
+      }
+    ;;
+
+    let sexp_of_t t = Serialization.sexp_of_t (to_serialization t)
+    let t_of_sexp sexp = of_serialization (Serialization.t_of_sexp sexp)
+    let default () = to_serialization default
+    let is_default t = [%compare.equal: Serialization.t] (to_serialization t) (default ())
+
+    include
+      Core_kernel.Binable.Of_binable_without_uuid [@alert "-legacy"]
+        (Serialization)
+        (struct
+          type nonrec t = t
+
+          let to_binable = to_serialization
+          let of_binable = of_serialization
+        end)
+
+    (* This check verifies the default value produces '()',
+       acknowledging that the fields that we believe are default in C code, are
+       coded as default in the sexp as well. If this changes, a new stable type
+       should be created *)
+    let%expect_test _ =
+      [%sexp_of: Serialization.t] (default ()) |> print_s;
+      [%expect {| () |}]
+    ;;
+  end
 end

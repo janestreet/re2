@@ -111,19 +111,116 @@ let options t = cre2__options t |> Options.Private.of_c_repr
 let of_string pat = create_exn pat
 let to_string t = cre2__pattern t
 
-module T = struct
-  type nonrec t = t
+module Stable = struct
+  open Core_kernel.Core_kernel_stable
 
-  let of_string = of_string
-  let to_string = to_string
+  module V2 = struct
+    module Repr = struct
+      type t =
+        { pattern : string
+        ; options : Options.Stable.V2.t
+        }
+      [@@deriving bin_io, compare, hash]
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| 5081a6119bfacbe1515e8caf368f40e5 |}]
+      ;;
+
+      type t_long_sexp_serialization = string * Options.Stable.V2.t [@@deriving sexp]
+
+      let sexp_of_t { pattern; options } =
+        (* in the vast majority of cases, [t] is created with default options, therefore
+           we would like to treat that case with just a simple Sexp.Atom (more readable
+           in sexp representation) *)
+        if Options.Stable.V2.is_default options
+        then Sexp.V1.Atom pattern
+        else [%sexp_of: t_long_sexp_serialization] (pattern, options)
+      ;;
+
+      let t_of_sexp = function
+        | Sexp.V1.Atom pattern ->
+          let options = Options.default in
+          { pattern; options }
+        | sexp ->
+          let pattern, options = [%of_sexp: t_long_sexp_serialization] sexp in
+          { pattern; options }
+      ;;
+    end
+
+    module T = struct
+      type nonrec t = t
+
+      let caller_identity =
+        Bin_prot.Shape.Uuid.of_string "1d372eb2-6c4e-11eb-bd12-aa000016704e"
+      ;;
+
+      let to_repr t = { Repr.pattern = pattern t; options = options t }
+      let of_repr { Repr.pattern; options } = create_exn ~options pattern
+      let to_binable = to_repr
+      let of_binable = of_repr
+      let to_sexpable = to_repr
+      let of_sexpable = of_repr
+    end
+
+    include T
+
+    module T_serializable_comparable = struct
+      include Binable.Of_binable.V2 (Repr) (T)
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| b22d9edbef943331b08f0d5df92d4b75 |}]
+      ;;
+
+      include Sexpable.Of_sexpable.V1 (Repr) (T)
+
+      let compare t1 t2 = Repr.compare (T.to_repr t1) (T.to_repr t2)
+
+      include (val Comparator.V1.make ~compare ~sexp_of_t)
+    end
+
+    include T_serializable_comparable
+
+    let hash t = Repr.hash (T.to_repr t)
+    let hash_fold_t state t = Repr.hash_fold_t state (T.to_repr t)
+
+    include Comparable.V1.Make (struct
+        include T
+        include T_serializable_comparable
+      end)
+  end
+
+  module V1 = struct
+    module T = struct
+      type nonrec t = t
+
+      let of_string pat = create_exn ~options:Options.default pat
+      let to_string t = pattern t
+    end
+
+    include T
+
+    module TS = struct
+      include Binable.Of_stringable.V1 [@alert "-legacy"] (T)
+
+      let%expect_test _ =
+        print_endline [%bin_digest: t];
+        [%expect {| d9a8da25d5656b016fb4dbdc2e4197fb |}]
+      ;;
+
+      include Sexpable.Of_stringable.V1 (T)
+
+      let compare t1 t2 = String.V1.compare (to_string t1) (to_string t2)
+      let hash t = String.V1.hash (to_string t)
+      let hash_fold_t s t = String.V1.hash_fold_t s (to_string t)
+    end
+
+    include TS
+  end
 end
 
-include Binable.Of_stringable_without_uuid [@alert "-legacy"] (T)
-include Sexpable.Of_stringable (T)
-
-let compare t1 t2 = String.compare (to_string t1) (to_string t2)
-let hash t = String.hash (to_string t)
-let hash_fold_t s t = String.hash_fold_t s (to_string t)
+include Stable.V1.TS
 
 type id_t =
   [ `Index of int
@@ -379,13 +476,22 @@ let%test_module _ =
     let%test _ =
       let re = create_exn "^(.*)\\\\" in
       let buf = Bin_prot.Common.create_buf 100 in
-      ignore (bin_write_t buf ~pos:0 re : int);
-      Int.( = ) 0 (compare re (bin_read_t buf ~pos_ref:(ref 0)))
+      ignore (Stable.V1.bin_write_t buf ~pos:0 re : int);
+      Int.( = ) 0 (compare re (Stable.V1.bin_read_t buf ~pos_ref:(ref 0)))
+    ;;
+
+    let%test _ =
+      let re =
+        create_exn ~options:{ Options.default with case_sensitive = false } "^(.*)\\\\"
+      in
+      let buf = Bin_prot.Common.create_buf 100 in
+      ignore (Stable.V2.bin_write_t buf ~pos:0 re : int);
+      Int.( = ) 0 (Stable.V2.compare re (Stable.V2.bin_read_t buf ~pos_ref:(ref 0)))
     ;;
 
     let%test _ =
       let re = create_exn "^(.*)\\\\" in
-      Int.( = ) 0 (compare re (t_of_sexp (sexp_of_t re)))
+      Int.( = ) 0 (compare re (Stable.V1.t_of_sexp (sexp_of_t re)))
     ;;
 
     let%test _ =
@@ -421,4 +527,53 @@ let%bench_fun ("find_submatches with many Nones"[@indexed n = [ 5; 10; 50; 100; 
   fun () ->
     let _r = find_submatches regex (Int.to_string n) in
     ()
+;;
+
+let%expect_test "roundtrip Stable.V2.t_of_sexp and Stable.V2.sexp_of_t" =
+  [ {|""|}
+  ; "^sim?ple*"
+  ; "(cAse ((case_insensitive)))"
+  ; "(cAse ((case_insensitive) (encoding Latin1)))"
+  ]
+  |> List.iter ~f:(fun s ->
+    Sexp.of_string_conv_exn s Stable.V2.t_of_sexp |> Stable.V2.sexp_of_t |> print_s);
+  [%expect
+    {|
+      ""
+      ^sim?ple*
+      (cAse ((case_insensitive)))
+      (cAse ((case_insensitive) (encoding Latin1)))
+    |}]
+;;
+
+let%expect_test "behavior of options wrt comparison/hashing" =
+  let t1 x = create_exn ~options:{ Options.default with case_sensitive = true } x in
+  let t2 x = create_exn ~options:{ Options.default with case_sensitive = false } x in
+  (let t1 = t1 ""
+   and t2 = t2 "" in
+   assert ([%compare.equal: t] t1 t2);
+   assert ([%compare.equal: Stable.V1.t] t1 t2);
+   assert (not ([%compare.equal: Stable.V2.t] t1 t2)));
+  let stable_v2_unequal =
+    List.filter [ ""; "1"; "2"; "3" ] ~f:(fun str ->
+      let h hash = hash (t1 str) = hash (t2 str) in
+      assert (h [%hash: t] && h [%hash: Stable.V1.t]);
+      not (h [%hash: Stable.V2.t]))
+  in
+  assert (not (List.is_empty stable_v2_unequal))
+;;
+
+let%test_unit "t preserved via Stable.V2.sexp_of_t and Stable.V2.t_of_sexp" =
+  let f_pattern = pattern
+  and f_options = options in
+  List.iter
+    [ "", None
+    ; "^sim?ple*", None
+    ; "cAse", Some { Options.default with case_sensitive = false }
+    ; "cAse", Some { Options.default with case_sensitive = false; encoding = Latin1 }
+    ]
+    ~f:(fun (pattern, options) ->
+      let t = create_exn ?options pattern |> Stable.V2.sexp_of_t |> Stable.V2.t_of_sexp in
+      let options = Option.value options ~default:Options.default in
+      [%test_eq: string * Options.t] (f_pattern t, f_options t) (pattern, options))
 ;;

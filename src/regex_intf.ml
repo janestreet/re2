@@ -28,7 +28,11 @@ efficiently. The syntax page gives full details. v}
 
   (** {6 Basic Types} *)
 
+  (** The sexp, bin_io, compare and hash functions are the same functions as in Stable.V1,
+      that is they lose the options. We recommend using Stable.V2.t for better behavior.
+  *)
   type t [@@deriving bin_io, compare, sexp, hash]
+
   type regex = t
 
   (** Subpatterns are referenced by name if labelled with the [/(?P<...>...)/] syntax, or
@@ -266,5 +270,24 @@ runs even faster if nmatch == 0. v}
 
     (** Like [matches], but values are listed in unspecified order. *)
     val matches_no_order : 'a t -> string -> 'a list
+  end
+
+  module Stable : sig
+    (** [V2] serializes, compares and hashes the pattern and the all currently known
+        options, except max_mem. If Re2 gained a new option, we would have to mint a V3.t
+        as the V2 format would not support this option. How we support such an upgrade
+        (raise, drop the option, smash the tree) will have to considered then. *)
+    module V2 : sig
+      type nonrec t = t [@@deriving hash]
+
+      include Stable_comparable.V1 with type t := t
+    end
+
+    (** [V1] is the legacy serialization: pattern only, options are lost. *)
+    module V1 : sig
+      type nonrec t = t [@@deriving hash]
+
+      include Stable_without_comparator with type t := t
+    end
   end
 end

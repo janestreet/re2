@@ -45,3 +45,21 @@ module Private : sig
   val to_c_repr : t -> C_repr.t
   val of_c_repr : C_repr.t -> t
 end
+
+module Stable : sig
+  module Encoding : sig
+    module V1 : sig
+      type t = Encoding.t [@@deriving hash]
+
+      include Stable_without_comparator with type t := t
+    end
+  end
+
+  module V2 : sig
+    type nonrec t = t [@@deriving hash]
+
+    val is_default : t -> bool
+
+    include Stable_without_comparator with type t := t
+  end
+end
