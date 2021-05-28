@@ -191,7 +191,7 @@ module Stable = struct
       end)
   end
 
-  module V1 = struct
+  module V1_no_options = struct
     module T = struct
       type nonrec t = t
 
@@ -220,7 +220,7 @@ module Stable = struct
   end
 end
 
-include Stable.V1.TS
+include Stable.V1_no_options.TS
 
 type id_t =
   [ `Index of int
@@ -476,8 +476,8 @@ let%test_module _ =
     let%test _ =
       let re = create_exn "^(.*)\\\\" in
       let buf = Bin_prot.Common.create_buf 100 in
-      ignore (Stable.V1.bin_write_t buf ~pos:0 re : int);
-      Int.( = ) 0 (compare re (Stable.V1.bin_read_t buf ~pos_ref:(ref 0)))
+      ignore (Stable.V1_no_options.bin_write_t buf ~pos:0 re : int);
+      Int.( = ) 0 (compare re (Stable.V1_no_options.bin_read_t buf ~pos_ref:(ref 0)))
     ;;
 
     let%test _ =
@@ -491,7 +491,7 @@ let%test_module _ =
 
     let%test _ =
       let re = create_exn "^(.*)\\\\" in
-      Int.( = ) 0 (compare re (Stable.V1.t_of_sexp (sexp_of_t re)))
+      Int.( = ) 0 (compare re (Stable.V1_no_options.t_of_sexp (sexp_of_t re)))
     ;;
 
     let%test _ =
@@ -552,12 +552,12 @@ let%expect_test "behavior of options wrt comparison/hashing" =
   (let t1 = t1 ""
    and t2 = t2 "" in
    assert ([%compare.equal: t] t1 t2);
-   assert ([%compare.equal: Stable.V1.t] t1 t2);
+   assert ([%compare.equal: Stable.V1_no_options.t] t1 t2);
    assert (not ([%compare.equal: Stable.V2.t] t1 t2)));
   let stable_v2_unequal =
     List.filter [ ""; "1"; "2"; "3" ] ~f:(fun str ->
       let h hash = hash (t1 str) = hash (t2 str) in
-      assert (h [%hash: t] && h [%hash: Stable.V1.t]);
+      assert (h [%hash: t] && h [%hash: Stable.V1_no_options.t]);
       not (h [%hash: Stable.V2.t]))
   in
   assert (not (List.is_empty stable_v2_unequal))

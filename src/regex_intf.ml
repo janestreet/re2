@@ -28,10 +28,10 @@ efficiently. The syntax page gives full details. v}
 
   (** {6 Basic Types} *)
 
-  (** The sexp, bin_io, compare and hash functions are the same functions as in Stable.V1,
+  (** The sexp_of, compare and hash functions are the same functions as in Stable.V1,
       that is they lose the options. We recommend using Stable.V2.t for better behavior.
   *)
-  type t [@@deriving bin_io, compare, sexp, hash]
+  type t [@@deriving compare, sexp_of, hash]
 
   type regex = t
 
@@ -283,8 +283,8 @@ runs even faster if nmatch == 0. v}
       include Stable_comparable.V1 with type t := t
     end
 
-    (** [V1] is the legacy serialization: pattern only, options are lost. *)
-    module V1 : sig
+    (** [V1_no_options] is the legacy serialization: pattern only, options are lost. *)
+    module V1_no_options : sig
       type nonrec t = t [@@deriving hash]
 
       include Stable_without_comparator with type t := t
