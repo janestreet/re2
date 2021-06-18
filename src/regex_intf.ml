@@ -1,4 +1,4 @@
-open Core_kernel
+open Core
 
 module type S = sig
   (** These are OCaml bindings for Google's re2 library.  Quoting from the re2 homepage:
@@ -28,10 +28,10 @@ efficiently. The syntax page gives full details. v}
 
   (** {6 Basic Types} *)
 
-  (** The sexp_of, compare and hash functions are the same functions as in Stable.V1,
-      that is they lose the options. We recommend using Stable.V2.t for better behavior.
-  *)
-  type t [@@deriving compare, sexp_of, hash]
+  type t [@@deriving sexp_of]
+
+  include Comparable.S_plain with type t := t
+  include Hashable.S_plain with type t := t
 
   type regex = t
 
@@ -280,7 +280,10 @@ runs even faster if nmatch == 0. v}
     module V2 : sig
       type nonrec t = t [@@deriving hash]
 
-      include Stable_comparable.V1 with type t := t
+      include
+        Stable_comparable.V1
+        with type t := t
+         and type comparator_witness = comparator_witness
     end
 
     (** [V1_no_options] is the legacy serialization: pattern only, options are lost. *)

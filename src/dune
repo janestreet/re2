@@ -1,6 +1,7 @@
 (library (name re2) (public_name re2)
- (libraries core_kernel re2_c core_kernel.rope) (virtual_deps conf-g++)
- (c_library_flags :standard -lstdc++ -lpthread) (cxx_names stubs)
+ (libraries core_kernel.core re2_c core_kernel.rope) (virtual_deps conf-g++)
+ (c_library_flags :standard -lstdc++ -lpthread) (flags :standard -w +52)
+ (cxx_names stubs)
  (cxx_flags (:standard -x c++ \ -pedantic) (-I re2_c/libre2))
  (preprocess (pps ppx_jane)))
 

@@ -1,4 +1,4 @@
-open Core_kernel
+open Core
 
 module type S = sig
   (** A value of type ['a t] is a regex that parses ['a]s.

@@ -4,7 +4,7 @@
     that make it more efficient to drop down into C directly.
 *)
 
-open Core_kernel
+open Core
 
 type t
 type 'a without_trailing_none = 'a [@@deriving sexp_of]
@@ -112,7 +112,7 @@ let of_string pat = create_exn pat
 let to_string t = cre2__pattern t
 
 module Stable = struct
-  open Core_kernel.Core_kernel_stable
+  open Core.Core_stable
 
   module V2 = struct
     module Repr = struct
@@ -220,7 +220,7 @@ module Stable = struct
   end
 end
 
-include Stable.V1_no_options.TS
+include Stable.V2.T_serializable_comparable
 
 type id_t =
   [ `Index of int
@@ -248,15 +248,13 @@ module Match = struct
 
   let get_pos_exn ~sub t =
     let i = index_of_id_exn t.rex sub in
-    let maybe_captures =
-      try t.captures.(i) with
-      | Invalid_argument "index out of bounds" ->
-        raise (Regex_no_such_subpattern (i, Array.length t.captures))
-      | e -> raise e
-    in
-    match maybe_captures with
-    | None -> raise (Regex_submatch_did_not_capture (cre2__pattern t.rex, i))
-    | Some retval -> retval
+    let length = Array.length t.captures in
+    if i < 0 || i >= length
+    then raise (Regex_no_such_subpattern (i, length))
+    else (
+      match t.captures.(i) with
+      | None -> raise (Regex_submatch_did_not_capture (cre2__pattern t.rex, i))
+      | Some retval -> retval)
   ;;
 
   let get_exn ~sub t =
@@ -491,7 +489,7 @@ let%test_module _ =
 
     let%test _ =
       let re = create_exn "^(.*)\\\\" in
-      Int.( = ) 0 (compare re (Stable.V1_no_options.t_of_sexp (sexp_of_t re)))
+      Int.( = ) 0 (compare re (Stable.V2.t_of_sexp (sexp_of_t re)))
     ;;
 
     let%test _ =
@@ -551,13 +549,13 @@ let%expect_test "behavior of options wrt comparison/hashing" =
   let t2 x = create_exn ~options:{ Options.default with case_sensitive = false } x in
   (let t1 = t1 ""
    and t2 = t2 "" in
-   assert ([%compare.equal: t] t1 t2);
+   assert (not ([%compare.equal: t] t1 t2));
    assert ([%compare.equal: Stable.V1_no_options.t] t1 t2);
    assert (not ([%compare.equal: Stable.V2.t] t1 t2)));
   let stable_v2_unequal =
     List.filter [ ""; "1"; "2"; "3" ] ~f:(fun str ->
       let h hash = hash (t1 str) = hash (t2 str) in
-      assert (h [%hash: t] && h [%hash: Stable.V1_no_options.t]);
+      assert (h [%hash: Stable.V1_no_options.t]);
       not (h [%hash: Stable.V2.t]))
   in
   assert (not (List.is_empty stable_v2_unequal))
@@ -577,3 +575,18 @@ let%test_unit "t preserved via Stable.V2.sexp_of_t and Stable.V2.t_of_sexp" =
       let options = Option.value options ~default:Options.default in
       [%test_eq: string * Options.t] (f_pattern t, f_options t) (pattern, options))
 ;;
+
+include Comparable.Make_plain_using_comparator (struct
+    type nonrec t = t
+
+    include Stable.V2.T_serializable_comparable
+  end)
+
+include Hashable.Make_plain (struct
+    type nonrec t = t
+
+    include Stable.V2.T_serializable_comparable
+
+    let hash = Stable.V2.hash
+    let hash_fold_t = Stable.V2.hash_fold_t
+  end)

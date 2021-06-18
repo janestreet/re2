@@ -1,4 +1,4 @@
-open! Core_kernel
+open! Core
 
 (** See [re2_c/libre2/re2/re2.h] for documentation of these options. *)
 

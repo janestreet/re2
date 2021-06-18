@@ -1,5 +1,5 @@
 module Stable0 = struct
-  open! Core_kernel.Core_kernel_stable
+  open! Core.Core_stable
 
   module Encoding = struct
     module V1 = struct
@@ -55,7 +55,7 @@ module Stable0 = struct
   end
 end
 
-open! Core_kernel
+open! Core
 
 module Encoding = struct
   type t = Stable0.Encoding.V1.t =
@@ -316,7 +316,7 @@ module Stable = struct
     let is_default t = [%compare.equal: Serialization.t] (to_serialization t) (default ())
 
     include
-      Core_kernel.Binable.Of_binable_without_uuid [@alert "-legacy"]
+      Core.Binable.Of_binable_without_uuid [@alert "-legacy"]
         (Serialization)
         (struct
           type nonrec t = t
