@@ -599,13 +599,13 @@ module Body = struct
             ~expect:(Some (String.make n 'x'))
       ;;
 
-      let%bench_fun ("compilation"[@indexed n = [ 500; 1000; 2000; 10000 ]]) =
+      let%bench_fun ("compilation" [@indexed n = [ 500; 1000; 2000; 10000 ]]) =
         fun () ->
           let (_ : unit -> unit) = big_regex_benchmark n in
           ()
       ;;
 
-      let%bench_fun ("matching only"[@indexed n = [ 500; 1000; 2000 ]]) =
+      let%bench_fun ("matching only" [@indexed n = [ 500; 1000; 2000 ]]) =
         big_regex_benchmark n
       ;;
     end)

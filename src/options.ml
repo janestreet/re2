@@ -161,7 +161,6 @@ module C_repr = struct
 
   external set_word_boundary : t -> bool -> unit = "mlre2__options__set_word_boundary"
   [@@noalloc]
-
   (*$*)
 
   external create_quiet : unit -> t = "mlre2__options__create_quiet"
