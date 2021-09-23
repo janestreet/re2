@@ -189,7 +189,7 @@ class WriterMutexLock {
 #ifdef HAVE_PTHREAD
 
 #define GLOBAL_MUTEX(name) \
-	static pthread_mutex_t (name) = PTHREAD_MUTEX_INITIALIZER
+	static pthread_mutex_t name = PTHREAD_MUTEX_INITIALIZER
 #define GLOBAL_MUTEX_LOCK(name) \
 	pthread_mutex_lock(&(name))
 #define GLOBAL_MUTEX_UNLOCK(name) \
