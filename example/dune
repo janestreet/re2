@@ -1,2 +1,2 @@
-(executables (names grep2) (libraries core_kernel.core re2)
+(executables (names grep2) (libraries core re2)
  (preprocess no_preprocessing))
