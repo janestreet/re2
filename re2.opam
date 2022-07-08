@@ -20,3 +20,4 @@ depends: [
 synopsis: "OCaml bindings for RE2, Google's regular expression library"
 description: "
 "
+available: arch != "arm32"
