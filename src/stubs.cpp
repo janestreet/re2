@@ -248,11 +248,6 @@ extern "C" {
     CAMLreturn0;
   }
 
-  /* returns (cre2__obj_t * int * (string * int) list) where
-   * - cre2__obj_t is the ML-side name for a custom_block with a struct regex *
-   * - int is the number of submatches, including the whole match
-   * - (string * int) list is the Map.to_alist of the submatch (name, index) Map.t
-   */
   CAMLprim value mlre2__create_re(value v_options, value v_pattern) {
     value v_retval, v_compile_error;
     const char * c_pat = String_val(v_pattern);
@@ -293,6 +288,30 @@ extern "C" {
     if (it == Regex_val(v_regex)->NamedCapturingGroups().end()) {
       return Val_int(-1);
     } else return Val_int(it->second);
+  }
+
+  /* returns (string * int) list -- i.e. the association list
+   * of Regex_val(v_regex)->NamedCapturingGroups()
+   */
+  CAMLprim value mlre2__get_named_capturing_groups(value v_regex) {
+    CAMLparam1(v_regex);
+    CAMLlocal3(v_retval, v_group, v_cons);
+    v_retval = Val_emptylist;
+
+    std::map<string, int> capturing_groups = Regex_val(v_regex)->NamedCapturingGroups();
+    std::map<string, int>::iterator it;
+
+    for (it = capturing_groups.begin(); it != capturing_groups.end(); it++) {
+      v_group = caml_alloc_tuple(2);
+      Store_field(v_group, 0, caml_copy_string(it->first.c_str()));
+      Store_field(v_group, 1, Val_int(it->second));
+
+      v_cons = caml_alloc(2, Tag_cons);
+      Store_field(v_cons, 0, v_group);
+      Store_field(v_cons, 1, v_retval);
+      v_retval = v_cons;
+    }
+    CAMLreturn(v_retval);
   }
 
   CAMLprim value mlre2__pattern(value v_regex) {

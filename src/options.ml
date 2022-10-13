@@ -6,7 +6,7 @@ module Stable0 = struct
       type t =
         | Latin1
         | Utf8
-      [@@deriving bin_io, compare, hash, sexp]
+      [@@deriving bin_io, compare, hash, sexp, stable_witness]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -45,7 +45,7 @@ module Stable0 = struct
         ; posix_syntax : bool [@sexp.bool]
         ; word_boundary : bool [@sexp.bool]
         }
-      [@@deriving bin_io, compare, hash, sexp]
+      [@@deriving bin_io, compare, hash, sexp, stable_witness]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -223,6 +223,7 @@ module Private = struct
 end
 
 module Stable = struct
+  open! Stable_witness.Export
   include Stable0
 
   module V2 = struct
@@ -243,7 +244,7 @@ module Stable = struct
       ; posix_syntax : bool
       ; word_boundary : bool
       }
-    [@@deriving compare, hash]
+    [@@deriving compare, hash, stable_witness]
 
     let to_serialization
           { case_sensitive

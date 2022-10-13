@@ -90,6 +90,10 @@ runs even faster if nmatch == 0. v}
   *)
   val num_submatches : t -> int
 
+  (** [get_named_capturing_groups t] returns a map from names of capturing groups
+      in t to their indices. *)
+  val get_named_capturing_groups : t -> Int.t String.Map.t
+
   (** [pattern t] returns the pattern from which the regex was constructed. *)
   val pattern : t -> string
 
@@ -278,17 +282,17 @@ runs even faster if nmatch == 0. v}
         as the V2 format would not support this option. How we support such an upgrade
         (raise, drop the option, smash the tree) will have to considered then. *)
     module V2 : sig
-      type nonrec t = t [@@deriving hash]
+      type nonrec t = t [@@deriving hash, stable_witness]
 
       include
-        Stable_comparable.V1
+        Stable_comparable.With_stable_witness.V1
         with type t := t
          and type comparator_witness = comparator_witness
     end
 
     (** [V1_no_options] is the legacy serialization: pattern only, options are lost. *)
     module V1_no_options : sig
-      type nonrec t = t [@@deriving hash]
+      type nonrec t = t [@@deriving hash, stable_witness]
 
       include Stable_without_comparator with type t := t
     end

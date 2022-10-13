@@ -51,7 +51,7 @@ module Stable : sig
     module V1 : sig
       type t = Encoding.t [@@deriving hash]
 
-      include Stable_without_comparator with type t := t
+      include Stable_without_comparator_with_witness with type t := t
     end
   end
 
@@ -60,6 +60,6 @@ module Stable : sig
 
     val is_default : t -> bool
 
-    include Stable_without_comparator with type t := t
+    include Stable_without_comparator_with_witness with type t := t
   end
 end
