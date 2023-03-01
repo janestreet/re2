@@ -12,12 +12,13 @@ build: [
 depends: [
   "ocaml" {>= "4.08.0"}
   "core"
-  "core_kernel"
+  "jane_rope"
   "ppx_jane"
-  "conf-g++"    {build}
-  "dune"        {>= "2.0.0"}
+  "regex_parser_intf"
+  "conf-g++"          {build}
+  "dune"              {>= "2.0.0"}
 ]
+available: arch != "arm32" & arch != "x86_32"
 synopsis: "OCaml bindings for RE2, Google's regular expression library"
 description: "
 "
-available: arch != "arm32"
