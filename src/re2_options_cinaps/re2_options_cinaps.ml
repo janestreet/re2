@@ -67,8 +67,7 @@ let print_of_c_repr_fields () =
   List.iter all ~f:(fun { name; type_ = _ } ->
     if String.equal "encoding" name
     then
-      printf
-        "\n~encoding:(f (fun c_repr -> Encoding.of_c_repr (C_repr.encoding c_repr)))"
+      printf "\n~encoding:(f (fun c_repr -> Encoding.of_c_repr (C_repr.encoding c_repr)))"
     else printf "\n~%s:(f C_repr.%s)" name name)
 ;;
 

@@ -147,7 +147,6 @@ module Body = struct
   ;;
 
   let string s = of_captureless_string (Regex.escape s)
-
   let%test_unit _ = should_match_unit (string "blah") "bloblahba"
   let%test_unit _ = should_not_match (string ".") "x"
 
@@ -370,12 +369,9 @@ module Body = struct
   ;;
 
   let start_of_input = of_captureless_string "^"
-
   let%test_unit _ = should_match_unit (start_of_input *> string "blah") "blahblee"
   let%test_unit _ = should_not_match (start_of_input *> string "blah") "bloblahba"
-
   let end_of_input = of_captureless_string "$"
-
   let%test_unit _ = should_match_unit (string "blee" *> end_of_input) "blahblee"
   let%test_unit _ = should_not_match (string "blah" *> end_of_input) "bloblahba"
 
@@ -479,8 +475,7 @@ module Body = struct
                 regex
                 (String.of_char c)
                 c
-            else
-              should_not_match_with_case ~case_sensitive:true regex (String.of_char c))
+            else should_not_match_with_case ~case_sensitive:true regex (String.of_char c))
         ;;
 
         let%test_unit _ = matches_pred upper Char.is_uppercase
@@ -573,7 +568,6 @@ module Body = struct
 
     let unsigned = map (capture (repeat ~min:1 Char.digit)) ~f:Int.of_string
     let int = map2 sign unsigned ~f:( * )
-
     let%test_unit "Parsing an empty string shouldn't raise" = run int "" |> Core.ignore
     let%test_unit _ = should_not_match int ""
     let%test_unit _ = should_match Int.sexp_of_t int "-10" (-10)
