@@ -1,3 +1,11 @@
+## Release v0.16.0
+
+- Added stable witnesses in `Regex` and `Options`
+- Refactored `Parser` interface to use the shared `Regex_parser_intf.S` module type. This
+  facilitates migration to `Re_parser`, a pure OCaml implementation based on `Re`.
+
+## Old pre-v0.15 changelogs (very likely stale and incomplete)
+
 ## v0.11
 
 - Re2 is now a "stdless" library:
