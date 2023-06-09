@@ -595,8 +595,8 @@ module Body = struct
 
       let%bench_fun ("compilation" [@indexed n = [ 500; 1000; 2000; 10000 ]]) =
         fun () ->
-          let (_ : unit -> unit) = big_regex_benchmark n in
-          ()
+        let (_ : unit -> unit) = big_regex_benchmark n in
+        ()
       ;;
 
       let%bench_fun ("matching only" [@indexed n = [ 500; 1000; 2000 ]]) =
