@@ -248,6 +248,21 @@ extern "C" {
     CAMLreturn0;
   }
 
+/* We could use [options->max_mem] here, but that's 8MB, a great over-estimate
+   in most cases, so we just return a smaller constant, found by looking
+   at typical regexes after being fed large amount of text.
+
+   If in reality the regexes use more memory than this estimate suggests, then one
+   can imagine a program that allocates lots of regexes and uses too much memory.
+
+   However, this is only a problem if regexes dominate the allocation pattern.
+   In real word programs this situation seems unlikely to occur because
+   at the very least you're likely going to allocate the text you feed to
+   these regexes (and it's necessary to feed text to the regex to make its
+   lazy DFA grow).
+*/
+#define EXPECTED_MEM 50000
+
   CAMLprim value mlre2__create_re(value v_options, value v_pattern) {
     value v_retval, v_compile_error;
     const char * c_pat = String_val(v_pattern);
@@ -269,9 +284,7 @@ extern "C" {
           v_compile_error);
     }
 
-    v_retval = caml_alloc_custom(&mlre2__custom_regex_ops, sizeof(compiled),
-        1024*1024,      /* RE2 object uses ~1MB of memory outside the OCaml heap */
-        500*1024*1024);  /* I'm okay with 500MB of RAM being wasted */
+    v_retval = caml_alloc_custom_mem(&mlre2__custom_regex_ops, sizeof(compiled), EXPECTED_MEM);
 
     Regex_val(v_retval) = compiled;
 
@@ -315,7 +328,8 @@ extern "C" {
   }
 
   CAMLprim value mlre2__pattern(value v_regex) {
-    return caml_copy_string(Regex_val(v_regex)->pattern().c_str());
+    CAMLparam1(v_regex);
+    CAMLreturn(caml_copy_string(Regex_val(v_regex)->pattern().c_str()));
   }
 
   CAMLprim value mlre2__iter_next(value v_regex, value v_pos,
@@ -495,9 +509,7 @@ extern "C" {
 
     set = new RE2::Set(*RegexOptions_val(v_options), RE2::UNANCHORED);
 
-    v_retval = caml_alloc_custom(&mlre2__custom_regex_multiple_ops, sizeof(set),
-        1024*1024,      /* RE2 object uses ~1MB of memory outside the OCaml heap */
-        500*1024*1024);  /* I'm okay with 500MB of RAM being wasted */
+    v_retval = caml_alloc_custom_mem(&mlre2__custom_regex_multiple_ops, sizeof(set), EXPECTED_MEM);
 
     RegexSet_val(v_retval) = set;
 
@@ -721,9 +733,9 @@ extern "C" {
   /* The caller is responsible for assigning the returned value into a variable
      registered with [CAMLlocal*]. */
   value mlre2__options_alloc_custom_block(void) {
-    return caml_alloc_custom(&mlre2__custom_regex_options_ops, sizeof(RE2::Options *),
-                      100,      /* uses ~100 bytes outside the OCaml heap */
-                      1000 * 100);  /* I'm okay with 100k of RAM being wasted */
+    return caml_alloc_custom_mem(&mlre2__custom_regex_options_ops, sizeof(RE2::Options *),
+                                 100     /* uses ~100 bytes outside the OCaml heap */
+                                 );
   }
 
   CAMLprim value mlre2__options__create_quiet(value unit) {
