@@ -106,7 +106,8 @@ type t =
   ; posix_syntax : bool
   ; word_boundary : bool
   }
-[@@deriving compare, fields, sexp_of]
+[@@deriving
+  compare, fields ~getters ~iterators:make_creator ~direct_iterators:iter, sexp_of]
 
 module C_repr = struct
   type t
