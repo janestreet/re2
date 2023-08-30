@@ -44,7 +44,7 @@ external cre2__valid_rewrite_template
   -> string
   -> bool
   = "mlre2__valid_rewrite_template"
-[@@noalloc]
+  [@@noalloc]
 
 external cre2__escape : string -> string = "mlre2__escape"
 
@@ -201,9 +201,9 @@ module Stable = struct
     let hash_fold_t state t = Repr.hash_fold_t state (T.to_repr t)
 
     include Comparable.V1.With_stable_witness.Make (struct
-        include T
-        include T_serializable_comparable
-      end)
+      include T
+      include T_serializable_comparable
+    end)
   end
 
   module V1_no_options = struct
@@ -369,7 +369,7 @@ module Substring = struct
       (List.fold_left substrings ~init:0 ~f:(fun dst_pos { src; src_pos; len } ->
          Bytes.From_string.blit ~src ~src_pos ~dst ~dst_pos ~len;
          dst_pos + len)
-       : int);
+        : int);
     Bytes.unsafe_to_string ~no_mutation_while_string_reachable:dst
   ;;
 end
@@ -552,7 +552,7 @@ let%expect_test "roundtrip Stable.V2.t_of_sexp and Stable.V2.sexp_of_t" =
   ; "(cAse ((case_insensitive) (encoding Latin1)))"
   ]
   |> List.iter ~f:(fun s ->
-    Sexp.of_string_conv_exn s Stable.V2.t_of_sexp |> Stable.V2.sexp_of_t |> print_s);
+       Sexp.of_string_conv_exn s Stable.V2.t_of_sexp |> Stable.V2.sexp_of_t |> print_s);
   [%expect
     {|
       ""
@@ -595,16 +595,16 @@ let%test_unit "t preserved via Stable.V2.sexp_of_t and Stable.V2.t_of_sexp" =
 ;;
 
 include Comparable.Make_plain_using_comparator (struct
-    type nonrec t = t
+  type nonrec t = t
 
-    include Stable.V2.T_serializable_comparable
-  end)
+  include Stable.V2.T_serializable_comparable
+end)
 
 include Hashable.Make_plain (struct
-    type nonrec t = t
+  type nonrec t = t
 
-    include Stable.V2.T_serializable_comparable
+  include Stable.V2.T_serializable_comparable
 
-    let hash = Stable.V2.hash
-    let hash_fold_t = Stable.V2.hash_fold_t
-  end)
+  let hash = Stable.V2.hash
+  let hash_fold_t = Stable.V2.hash_fold_t
+end)

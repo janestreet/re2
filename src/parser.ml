@@ -22,7 +22,7 @@ module Body = struct
     let map =
       `Custom
         (fun t ~f ->
-           { t with to_result = (fun shift matches -> f (t.to_result shift matches)) })
+          { t with to_result = (fun shift matches -> f (t.to_result shift matches)) })
     ;;
 
     let apply tf tx =
@@ -163,10 +163,10 @@ module Body = struct
     ; num_submatches = t.num_submatches + 1
     ; to_result =
         (fun shift matches ->
-           ( t.to_result (shift + 1) matches
-           , Option.value_exn
-               ~message:"Re2.Parser.capture bug: failed to capture"
-               matches.(shift) ))
+          ( t.to_result (shift + 1) matches
+          , Option.value_exn
+              ~message:"Re2.Parser.capture bug: failed to capture"
+              matches.(shift) ))
     }
   ;;
 
@@ -204,8 +204,7 @@ module Body = struct
                 ~f:(fun x y -> x ^ of_string "|" ^ y)
                 (List.map ts ~f:(fun t -> Rope.(of_string "()" ^ t.regex_string)))
             ^ of_string ")")
-      ; num_submatches =
-          List.sum (module Int) ts ~f:(fun t -> t.num_submatches + 1)
+      ; num_submatches = List.sum (module Int) ts ~f:(fun t -> t.num_submatches + 1)
       ; to_result =
           (let rec go i matches = function
              | [] -> failwith "Re2.Parser.or_.to_result bug: called on non-match"
@@ -248,7 +247,7 @@ module Body = struct
     ; num_submatches = t.num_submatches + 1
     ; to_result =
         (fun shift matches ->
-           Option.map matches.(shift) ~f:(fun _ -> t.to_result (shift + 1) matches))
+          Option.map matches.(shift) ~f:(fun _ -> t.to_result (shift + 1) matches))
     }
   ;;
 
@@ -308,11 +307,11 @@ module Body = struct
           ~f:
             ([%test_pred: int option * int option * string * string option]
                (fun (min, max, inp, result) ->
-                  let a's = capture (repeat ?min ~max (string "a")) in
-                  0
-                  = [%compare: string option]
-                      result
-                      (run (string "c" *> a's <* string "b") inp)))
+               let a's = capture (repeat ?min ~max (string "a")) in
+               0
+               = [%compare: string option]
+                   result
+                   (run (string "c" *> a's <* string "b") inp)))
           [ None, None, "caaab", Some "aaa"
           ; None, None, "cb", Some ""
           ; Some 0, None, "cb", Some ""

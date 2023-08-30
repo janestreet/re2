@@ -36,8 +36,8 @@ module type Parser = sig
 
   include
     Applicative.Let_syntax
-    with type 'a t := 'a t
-    with module Open_on_rhs_intf := Open_on_rhs_intf
+      with type 'a t := 'a t
+      with module Open_on_rhs_intf := Open_on_rhs_intf
 
   include Open_on_rhs_intf.S with type 'a t := 'a t
 end

@@ -34,7 +34,7 @@ module Stable0 = struct
         { case_insensitive : bool [@sexp.bool]
         ; dot_nl : bool [@sexp.bool]
         ; encoding : Encoding.V1.t
-                     [@sexp.default Encoding.V1.Utf8] [@sexp_drop_default.compare]
+             [@sexp.default Encoding.V1.Utf8] [@sexp_drop_default.compare]
         ; literal : bool [@sexp.bool]
         ; log_errors : bool [@sexp.bool]
         ; longest_match : bool [@sexp.bool]
@@ -116,33 +116,33 @@ module C_repr = struct
   external case_sensitive : t -> bool = "mlre2__options__case_sensitive" [@@noalloc]
 
   external set_case_sensitive : t -> bool -> unit = "mlre2__options__set_case_sensitive"
-  [@@noalloc]
+    [@@noalloc]
 
   external dot_nl : t -> bool = "mlre2__options__dot_nl" [@@noalloc]
   external set_dot_nl : t -> bool -> unit = "mlre2__options__set_dot_nl" [@@noalloc]
   external encoding : t -> Encoding.C_repr.t = "mlre2__options__encoding" [@@noalloc]
 
   external set_encoding : t -> Encoding.C_repr.t -> unit = "mlre2__options__set_encoding"
-  [@@noalloc]
+    [@@noalloc]
 
   external literal : t -> bool = "mlre2__options__literal" [@@noalloc]
   external set_literal : t -> bool -> unit = "mlre2__options__set_literal" [@@noalloc]
   external log_errors : t -> bool = "mlre2__options__log_errors" [@@noalloc]
 
   external set_log_errors : t -> bool -> unit = "mlre2__options__set_log_errors"
-  [@@noalloc]
+    [@@noalloc]
 
   external longest_match : t -> bool = "mlre2__options__longest_match" [@@noalloc]
 
   external set_longest_match : t -> bool -> unit = "mlre2__options__set_longest_match"
-  [@@noalloc]
+    [@@noalloc]
 
   external max_mem : t -> int = "mlre2__options__max_mem" [@@noalloc]
   external set_max_mem : t -> int -> unit = "mlre2__options__set_max_mem" [@@noalloc]
   external never_capture : t -> bool = "mlre2__options__never_capture" [@@noalloc]
 
   external set_never_capture : t -> bool -> unit = "mlre2__options__set_never_capture"
-  [@@noalloc]
+    [@@noalloc]
 
   external never_nl : t -> bool = "mlre2__options__never_nl" [@@noalloc]
   external set_never_nl : t -> bool -> unit = "mlre2__options__set_never_nl" [@@noalloc]
@@ -151,17 +151,17 @@ module C_repr = struct
   external perl_classes : t -> bool = "mlre2__options__perl_classes" [@@noalloc]
 
   external set_perl_classes : t -> bool -> unit = "mlre2__options__set_perl_classes"
-  [@@noalloc]
+    [@@noalloc]
 
   external posix_syntax : t -> bool = "mlre2__options__posix_syntax" [@@noalloc]
 
   external set_posix_syntax : t -> bool -> unit = "mlre2__options__set_posix_syntax"
-  [@@noalloc]
+    [@@noalloc]
 
   external word_boundary : t -> bool = "mlre2__options__word_boundary" [@@noalloc]
 
   external set_word_boundary : t -> bool -> unit = "mlre2__options__set_word_boundary"
-  [@@noalloc]
+    [@@noalloc]
   (*$*)
 
   external create_quiet : unit -> t = "mlre2__options__create_quiet"
@@ -248,20 +248,20 @@ module Stable = struct
     [@@deriving compare, hash, stable_witness]
 
     let to_serialization
-          { case_sensitive
-          ; dot_nl
-          ; encoding
-          ; literal
-          ; log_errors
-          ; longest_match
-          ; max_mem = _
-          ; never_capture
-          ; never_nl
-          ; one_line
-          ; perl_classes
-          ; posix_syntax
-          ; word_boundary
-          }
+      { case_sensitive
+      ; dot_nl
+      ; encoding
+      ; literal
+      ; log_errors
+      ; longest_match
+      ; max_mem = _
+      ; never_capture
+      ; never_nl
+      ; one_line
+      ; perl_classes
+      ; posix_syntax
+      ; word_boundary
+      }
       : Serialization.t
       =
       { case_insensitive = not case_sensitive
@@ -280,20 +280,20 @@ module Stable = struct
     ;;
 
     let of_serialization
-          ({ case_insensitive
-           ; dot_nl
-           ; encoding
-           ; literal
-           ; log_errors
-           ; longest_match
-           ; never_capture
-           ; never_nl
-           ; one_line
-           ; perl_classes
-           ; posix_syntax
-           ; word_boundary
-           } :
-             Serialization.t)
+      ({ case_insensitive
+       ; dot_nl
+       ; encoding
+       ; literal
+       ; log_errors
+       ; longest_match
+       ; never_capture
+       ; never_nl
+       ; one_line
+       ; perl_classes
+       ; posix_syntax
+       ; word_boundary
+       } :
+        Serialization.t)
       =
       { case_sensitive = not case_insensitive
       ; dot_nl

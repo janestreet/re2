@@ -115,7 +115,6 @@ runs even faster if nmatch == 0. v}
 
   val find_first_exn : ?sub:id_t -> t -> string -> string
 
-
   (** [find_submatches t input] finds the first match and returns all submatches.
       Element 0 is the whole match and element 1 is the first parenthesized submatch, etc.
   *)
@@ -195,7 +194,6 @@ runs even faster if nmatch == 0. v}
     *)
     val get_pos_exn : sub:id_t -> t -> int * int
   end
-
 
   (** [get_matches pattern input] returns all non-overlapping matches of [pattern]
       against [input]
@@ -286,8 +284,8 @@ runs even faster if nmatch == 0. v}
 
       include
         Stable_comparable.With_stable_witness.V1
-        with type t := t
-         and type comparator_witness = comparator_witness
+          with type t := t
+           and type comparator_witness = comparator_witness
     end
 
     (** [V1_no_options] is the legacy serialization: pattern only, options are lost. *)
