@@ -4,11 +4,3 @@
  (cxx_names stubs)
  (cxx_flags (:standard -x c++ \ -pedantic) (-I re2_c/libre2))
  (preprocess (pps ppx_jane)))
-
-(rule
- (targets explicit_dependencies_unignored.ml
-  explicit_dependencies_unignored.mli)
- (mode fallback) (deps %{workspace_root}/bin/gen-explicit-dependencies.sh)
- (action
-  (bash
-   "%{deps} re2_c; for ext in ml mli; do mv explicit_dependencies{,_unignored}.$ext; done")))
