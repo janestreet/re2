@@ -35,6 +35,17 @@ external cre2__iter_next
   = "mlre2__iter_next"
 
 external cre2__matches : t -> string -> bool = "mlre2__matches" [@@noalloc]
+
+(* Unsafe because we don't do any bound checking. *)
+external cre2__matches_substring_no_context_unsafe
+  :  t
+  -> string
+  -> pos:int
+  -> len:int
+  -> bool
+  = "mlre2__matches_substring_no_context_unsafe"
+  [@@noalloc]
+
 external cre2__find_all : t -> int -> string -> string list = "mlre2__find_all"
 external cre2__find_first : t -> int -> string -> string = "mlre2__find_first"
 external cre2__rewrite_exn : t -> string -> string -> string = "mlre2__rewrite_exn"
@@ -335,6 +346,20 @@ let find_submatches_exn t input =
 
 let find_submatches t input = Or_error.try_with (fun () -> find_submatches_exn t input)
 let matches t input = cre2__matches t input
+
+let matches_substring_no_context_exn t input ~pos ~len =
+  let input_length = String.length input in
+  if pos < 0 || len < 0 || pos > input_length - len
+  then
+    raise_s
+      [%message
+        "Matches_substring_no_context_exn expects pos >= 0, len >= 0, and pos + len <= \
+         String.length input"
+          (pos : int)
+          (len : int)
+          (input_length : int)];
+  cre2__matches_substring_no_context_unsafe t input ~pos ~len
+;;
 
 let get_matches_exn ?sub ?max t input =
   let seq = to_sequence_exn ?sub t input in

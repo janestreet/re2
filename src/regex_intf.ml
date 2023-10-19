@@ -125,6 +125,12 @@ runs even faster if nmatch == 0. v}
   (** [matches pattern input] @return true iff [pattern] matches [input] *)
   val matches : t -> string -> bool
 
+  (** Same as {!matches}, except it only matches a substring, completely ignoring
+      the surrounding (i.e. treating the substring as if it's the full string).
+      Raises if [pos] and [len] specify an invalid range (negative values,
+      or the range is outside the string). *)
+  val matches_substring_no_context_exn : t -> string -> pos:int -> len:int -> bool
+
   (** [split pattern input] @return [input] broken into pieces where [pattern]
       matches.  Subpatterns are ignored.
 

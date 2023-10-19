@@ -381,6 +381,12 @@ extern "C" {
                                              RE2::UNANCHORED, NULL, 0));
   }
 
+  CAMLprim value mlre2__matches_substring_no_context_unsafe(value v_regex, value v_str, value v_start, value v_len) {
+    StringPiece str(String_val(v_str) + Int_val(v_start), Int_val(v_len));
+    return Val_int(Regex_val(v_regex)->Match(str, 0, str.length(),
+                                             RE2::UNANCHORED, NULL, 0));
+  }
+
   CAMLprim value mlre2__find_all(value v_regex, value v_sub, value v_str) {
     CAMLparam2(v_regex, v_str);
     CAMLlocal3(v_retval, v_car, v_cons);
