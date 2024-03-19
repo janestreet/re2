@@ -580,10 +580,10 @@ let%expect_test "roundtrip Stable.V2.t_of_sexp and Stable.V2.sexp_of_t" =
        Sexp.of_string_conv_exn s Stable.V2.t_of_sexp |> Stable.V2.sexp_of_t |> print_s);
   [%expect
     {|
-      ""
-      ^sim?ple*
-      (cAse ((case_insensitive)))
-      (cAse ((case_insensitive) (encoding Latin1)))
+    ""
+    ^sim?ple*
+    (cAse ((case_insensitive)))
+    (cAse ((case_insensitive) (encoding Latin1)))
     |}]
 ;;
 
