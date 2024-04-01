@@ -278,6 +278,16 @@ runs even faster if nmatch == 0. v}
 
     (** Like [matches], but values are listed in unspecified order. *)
     val matches_no_order : 'a t -> string -> 'a list
+
+    (** Expose the return values originally passed to [create].
+
+        The following identity holds:
+        {[
+          [%equal: a list]
+            (alist |> create_exn |> vals |> Array.Permissioned.to_list)
+            (alist |> List.map ~f:snd)
+        ]} *)
+    val vals : 'a t -> ('a, read) Array.Permissioned.t
   end
 
   module Stable : sig

@@ -506,6 +506,8 @@ module Multiple = struct
     Array.sort indices ~compare:Int.compare;
     values_of_indices t indices
   ;;
+
+  let vals t = Array.Permissioned.of_array t.vals
 end
 
 module Infix = struct
