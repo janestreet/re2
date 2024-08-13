@@ -122,7 +122,8 @@ runs even faster if nmatch == 0. v}
 
   val find_submatches_exn : t -> string -> string option array
 
-  (** [matches pattern input] @return true iff [pattern] matches [input] *)
+  (** [matches pattern input]
+      @return true iff [pattern] matches [input] *)
   val matches : t -> string -> bool
 
   (** Same as {!matches}, except it only matches a substring, completely ignoring
@@ -131,8 +132,8 @@ runs even faster if nmatch == 0. v}
       or the range is outside the string). *)
   val matches_substring_no_context_exn : t -> string -> pos:int -> len:int -> bool
 
-  (** [split pattern input] @return [input] broken into pieces where [pattern]
-      matches.  Subpatterns are ignored.
+  (** [split pattern input]
+      @return [input] broken into pieces where [pattern] matches. Subpatterns are ignored.
 
       @param max (default: unlimited) split only at the leftmost [max] matches
 
@@ -172,12 +173,7 @@ runs even faster if nmatch == 0. v}
 
   (** {6 Complicated Interface} *)
 
-  type 'a without_trailing_none [@@deriving sexp_of]
-
-  (** This type marks call sites affected by a bugfix that eliminated a trailing
-      None. When you add this wrapper, check that your call site does not still work
-      around the bug by dropping the last element. *)
-  val without_trailing_none : 'a -> 'a without_trailing_none
+  val without_trailing_none : 'a -> 'a [@@deprecated "[since 2024-06] use Fn.id instead"]
 
   module Match : sig
     (** A Match.t is the result of applying a regex to an input string *)
@@ -192,7 +188,7 @@ runs even faster if nmatch == 0. v}
 
     (** [get_all t] returns all available matches as strings in an array.  For the
         indexing convention, see comment above regarding [sub] parameter. *)
-    val get_all : t without_trailing_none -> string option array
+    val get_all : t -> string option array
 
     (** [get_pos_exn ~sub t] returns the start offset and length in bytes.  Note that for
         variable-width encodings (e.g., UTF-8) this may not be the same as the character
@@ -213,13 +209,15 @@ runs even faster if nmatch == 0. v}
   val get_matches_exn : ?sub:id_t -> ?max:int -> t -> string -> Match.t list
   val to_sequence_exn : ?sub:id_t -> t -> string -> Match.t Sequence.t
 
-  (** [first_match pattern input] @return the first match iff [pattern] matches [input] *)
+  (** [first_match pattern input]
+      @return the first match iff [pattern] matches [input] *)
   val first_match : t -> string -> Match.t Or_error.t
 
   val first_match_exn : t -> string -> Match.t
 
-  (** [replace ?sub ?max ~f pattern input] @return an edited copy of [input] with every
-      substring matched by [pattern] transformed by [f].
+  (** [replace ?sub ?max ~f pattern input]
+      @return an edited copy of [input] with every substring matched by [pattern]
+      transformed by [f].
 
       @param only (default: all) replace only the nth match
   *)
@@ -300,8 +298,8 @@ runs even faster if nmatch == 0. v}
 
       include
         Stable_comparable.With_stable_witness.V1
-          with type t := t
-           and type comparator_witness = comparator_witness
+        with type t := t
+         and type comparator_witness = comparator_witness
     end
 
     (** [V1_no_options] is the legacy serialization: pattern only, options are lost. *)

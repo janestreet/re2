@@ -14,9 +14,10 @@ depends: [
   "core"
   "jane_rope"
   "ppx_jane"
+  "ppx_stable_witness"
   "regex_parser_intf"
-  "conf-g++"          {build}
-  "dune"              {>= "3.11.0"}
+  "conf-g++"           {build}
+  "dune"               {>= "3.11.0"}
 ]
 available: arch != "arm32" & arch != "x86_32"
 synopsis: "OCaml bindings for RE2, Google's regular expression library"

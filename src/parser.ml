@@ -60,18 +60,24 @@ module Body = struct
         [%sexp_of: string * Error.t]
   ;;
 
-  let compile ?case_sensitive t =
+  module Compiled = struct
+    type 'a t =
+      { rex : Regex.t
+      ; to_result : int -> string option array -> 'a
+      }
+  end
+
+  let compile ?case_sensitive t : _ Compiled.t =
     let rex = to_re2 ?case_sensitive t in
     let to_result = t.to_result in
-    Staged.stage (fun s ->
-      match Regex.get_matches_exn ~max:1 rex s with
-      | [] -> None
-      | m :: _ ->
-        let m = Regex.without_trailing_none m in
-        Some (to_result 1 (Regex.Match.get_all m)))
+    { rex; to_result }
   ;;
 
-  let run ?case_sensitive t = Staged.unstage (compile ?case_sensitive t)
+  let run (compiled : _ Compiled.t) s =
+    match Regex.get_matches_exn ~max:1 compiled.rex s with
+    | [] -> None
+    | m :: _ -> Some (compiled.to_result 1 (Regex.Match.get_all m))
+  ;;
 
   let ignore_m t =
     { regex_string = t.regex_string
@@ -80,29 +86,50 @@ module Body = struct
     }
   ;;
 
-  let matches ?case_sensitive t =
-    let r = to_re2 ?case_sensitive (ignore_m t) in
-    fun input -> Regex.matches r input
+  let matches (compiled : _ Compiled.t) input = Regex.matches compiled.rex input
+
+  let run_all (compiled : _ Compiled.t) input =
+    Regex.get_matches_exn compiled.rex input
+    |> List.map ~f:(fun m -> compiled.to_result 1 (Regex.Match.get_all m))
+  ;;
+
+  let run_and_split (compiled : _ Compiled.t) input =
+    let[@tail_mod_cons] rec split_matches ~matches ~pos =
+      match matches with
+      | [] ->
+        let len = String.length input in
+        if pos = len then [] else [ Second (String.sub input ~pos ~len:(len - pos)) ]
+      | m :: matches ->
+        let value = compiled.to_result 1 (Regex.Match.get_all m) in
+        let start, len = Regex.Match.get_pos_exn m ~sub:(`Index 0) in
+        let until = start + len in
+        if pos = start
+        then First value :: split_matches ~matches ~pos:until
+        else (
+          let string = String.sub input ~pos ~len:(start - pos) in
+          Second string :: First value :: split_matches ~matches ~pos:until)
+    in
+    split_matches ~matches:(Regex.get_matches_exn compiled.rex input) ~pos:0 [@nontail]
   ;;
 
   module For_test = struct
     let should_match_with_case ~case_sensitive sexp_of_r rex inp result =
       [%test_pred: r t * string]
         ~message:"should_match"
-        (fun (rex, inp) -> matches ~case_sensitive rex inp)
+        (fun (rex, inp) -> matches (compile ~case_sensitive rex) inp)
         (rex, inp);
       [%test_result: Sexp.t option]
         ~expect:(Some (sexp_of_r result))
-        (Option.map ~f:sexp_of_r (run ~case_sensitive rex inp))
+        (Option.map ~f:sexp_of_r (run (compile ~case_sensitive rex) inp))
     ;;
 
     let should_not_match_with_case ~case_sensitive rex inp =
       [%test_pred: _ t * string]
         ~message:"should_not_match"
-        (fun (rex, inp) -> not (matches ~case_sensitive rex inp))
+        (fun (rex, inp) -> not (matches (compile ~case_sensitive rex) inp))
         (rex, inp);
       [%test_pred: string t * string]
-        (fun (rex, inp) -> Option.is_none (run ~case_sensitive rex inp))
+        (fun (rex, inp) -> Option.is_none (run (compile ~case_sensitive rex) inp))
         (rex, inp)
     ;;
 
@@ -307,11 +334,11 @@ module Body = struct
           ~f:
             ([%test_pred: int option * int option * string * string option]
                (fun (min, max, inp, result) ->
-               let a's = capture (repeat ?min ~max (string "a")) in
-               0
-               = [%compare: string option]
-                   result
-                   (run (string "c" *> a's <* string "b") inp)))
+                  let a's = capture (repeat ?min ~max (string "a")) in
+                  0
+                  = [%compare: string option]
+                      result
+                      (run (compile (string "c" *> a's <* string "b")) inp)))
           [ None, None, "caaab", Some "aaa"
           ; None, None, "cb", Some ""
           ; Some 0, None, "cb", Some ""
@@ -567,7 +594,11 @@ module Body = struct
 
     let unsigned = map (capture (repeat ~min:1 Char.digit)) ~f:Int.of_string
     let int = map2 sign unsigned ~f:( * )
-    let%test_unit "Parsing an empty string shouldn't raise" = run int "" |> Core.ignore
+
+    let%test_unit "Parsing an empty string shouldn't raise" =
+      run (compile int) "" |> Core.ignore
+    ;;
+
     let%test_unit _ = should_not_match int ""
     let%test_unit _ = should_match Int.sexp_of_t int "-10" (-10)
     let%test_unit _ = should_match Int.sexp_of_t int "+005" 5
@@ -579,7 +610,7 @@ module Body = struct
   let%bench_module "big regex" =
     (module struct
       let big_regex_benchmark n =
-        let regex =
+        let compiled =
           compile
             (Fn.apply_n_times
                ~n
@@ -588,7 +619,7 @@ module Body = struct
         in
         fun () ->
           [%test_result: string option]
-            (Staged.unstage regex (String.make n 'x'))
+            (run compiled (String.make n 'x'))
             ~expect:(Some (String.make n 'x'))
       ;;
 

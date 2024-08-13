@@ -7,7 +7,8 @@
    (-I re2_c/libre2)))
  (name re2)
  (public_name re2)
- (libraries core re2_c regex_parser_intf jane_rope)
+ (libraries core re2_c regex_parser_intf jane_rope
+   ppx_stable_witness.stable_witness)
  (virtual_deps conf-g++)
  (c_library_flags :standard -lstdc++ -lpthread)
  (flags :standard -w +52)
