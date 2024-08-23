@@ -33,12 +33,12 @@ external cre2__iter_next
   -> int * (int * int) option array option
   = "mlre2__iter_next"
 
-external cre2__matches : t -> string -> bool = "mlre2__matches" [@@noalloc]
+external cre2__matches : t -> local_ string -> bool = "mlre2__matches" [@@noalloc]
 
 (* Unsafe because we don't do any bound checking. *)
 external cre2__matches_substring_no_context_unsafe
   :  t
-  -> string
+  -> local_ string
   -> pos:int
   -> len:int
   -> bool
@@ -344,7 +344,7 @@ let find_submatches_exn t input =
 ;;
 
 let find_submatches t input = Or_error.try_with (fun () -> find_submatches_exn t input)
-let matches t input = cre2__matches t input
+let matches t (local_ input) = cre2__matches t input
 
 let matches_substring_no_context_exn t input ~pos ~len =
   let input_length = String.length input in

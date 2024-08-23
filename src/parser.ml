@@ -94,7 +94,7 @@ module Body = struct
   ;;
 
   let run_and_split (compiled : _ Compiled.t) input =
-    let[@tail_mod_cons] rec split_matches ~matches ~pos =
+    let[@tail_mod_cons] rec local_ split_matches ~matches ~pos =
       match matches with
       | [] ->
         let len = String.length input in
