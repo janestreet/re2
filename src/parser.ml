@@ -327,54 +327,52 @@ module Body = struct
       else with_quantity t ~greedy ~quantity:(sprintf "{%d,%d}" min max)
   ;;
 
-  let%test_module "repeat" =
-    (module struct
-      let%test_unit _ =
-        List.iter
-          ~f:
-            ([%test_pred: int option * int option * string * string option]
-               (fun (min, max, inp, result) ->
-                  let a's = capture (repeat ?min ~max (string "a")) in
-                  0
-                  = [%compare: string option]
-                      result
-                      (run (compile (string "c" *> a's <* string "b")) inp)))
-          [ None, None, "caaab", Some "aaa"
-          ; None, None, "cb", Some ""
-          ; Some 0, None, "cb", Some ""
-          ; Some 1, None, "cb", None
-          ; Some 1, None, "cab", Some "a"
-          ; Some 1, Some 2, "caaab", None
-          ; Some 2, Some 2, "caaab", None
-          ; Some 3, Some 3, "caaab", Some "aaa"
-          ; Some 4, Some 4, "caaab", None
-          ; Some 2, None, "caaab", Some "aaa"
-          ; Some 0, Some 0, "cb", Some ""
-          ; Some 1, Some 1, "cab", Some "a"
-          ; None, Some 0, "cb", Some ""
-          ]
-      ;;
+  module%test [@name "repeat"] _ = struct
+    let%test_unit _ =
+      List.iter
+        ~f:
+          ([%test_pred: int option * int option * string * string option]
+             (fun (min, max, inp, result) ->
+                let a's = capture (repeat ?min ~max (string "a")) in
+                0
+                = [%compare: string option]
+                    result
+                    (run (compile (string "c" *> a's <* string "b")) inp)))
+        [ None, None, "caaab", Some "aaa"
+        ; None, None, "cb", Some ""
+        ; Some 0, None, "cb", Some ""
+        ; Some 1, None, "cb", None
+        ; Some 1, None, "cab", Some "a"
+        ; Some 1, Some 2, "caaab", None
+        ; Some 2, Some 2, "caaab", None
+        ; Some 3, Some 3, "caaab", Some "aaa"
+        ; Some 4, Some 4, "caaab", None
+        ; Some 2, None, "caaab", Some "aaa"
+        ; Some 0, Some 0, "cb", Some ""
+        ; Some 1, Some 1, "cab", Some "a"
+        ; None, Some 0, "cb", Some ""
+        ]
+    ;;
 
-      let%test _ = Exn.does_raise (fun () -> repeat ~min:3 ~max:(Some 2) fail)
-      let%test _ = Exn.does_raise (fun () -> repeat ~min:(-1) fail)
-      let%test _ = Exn.does_raise (fun () -> repeat ~max:(Some (-1)) fail)
-      let%test _ = Exn.does_raise (fun () -> repeat ~min:1001 fail)
+    let%test _ = Exn.does_raise (fun () -> repeat ~min:3 ~max:(Some 2) fail)
+    let%test _ = Exn.does_raise (fun () -> repeat ~min:(-1) fail)
+    let%test _ = Exn.does_raise (fun () -> repeat ~max:(Some (-1)) fail)
+    let%test _ = Exn.does_raise (fun () -> repeat ~min:1001 fail)
 
-      let%test_unit _ =
-        should_match_string
-          (capture (repeat (or_ [ string "a"; string "b" ]) *> string "a"))
-          "baba"
-          "baba"
-      ;;
+    let%test_unit _ =
+      should_match_string
+        (capture (repeat (or_ [ string "a"; string "b" ]) *> string "a"))
+        "baba"
+        "baba"
+    ;;
 
-      let%test_unit _ =
-        should_match_string
-          (capture (repeat ~greedy:false (or_ [ string "a"; string "b" ]) *> string "a"))
-          "baba"
-          "ba"
-      ;;
-    end)
-  ;;
+    let%test_unit _ =
+      should_match_string
+        (capture (repeat ~greedy:false (or_ [ string "a"; string "b" ]) *> string "a"))
+        "baba"
+        "ba"
+    ;;
+  end
 
   let times t n = repeat ~min:n ~max:(Some n) t
 
@@ -429,38 +427,32 @@ module Body = struct
     }
   ;;
 
-  let%test_module _ =
-    (module struct
-      let mk s = of_re2 (Regex.create_exn s)
+  module%test _ = struct
+    let mk s = of_re2 (Regex.create_exn s)
 
-      let%test_unit _ =
-        let r = mk "a(b)(?:c([de])|(?P<foo>f)g)" in
-        should_match
-          [%sexp_of: string option array]
-          r
-          "abcd"
-          [| Some "b"; Some "d"; None |];
-        should_match
-          [%sexp_of: string option array list]
-          (all [ r; r; r ])
-          "abcdabfgabce"
-          [ [| Some "b"; Some "d"; None |]
-          ; [| Some "b"; None; Some "f" |]
-          ; [| Some "b"; Some "e"; None |]
-          ]
-      ;;
+    let%test_unit _ =
+      let r = mk "a(b)(?:c([de])|(?P<foo>f)g)" in
+      should_match [%sexp_of: string option array] r "abcd" [| Some "b"; Some "d"; None |];
+      should_match
+        [%sexp_of: string option array list]
+        (all [ r; r; r ])
+        "abcdabfgabce"
+        [ [| Some "b"; Some "d"; None |]
+        ; [| Some "b"; None; Some "f" |]
+        ; [| Some "b"; Some "e"; None |]
+        ]
+    ;;
 
-      let%test_unit "messing with options" =
-        should_match_unit (ignore_m (mk "abc(?i)def")) "abcDEF";
-        match_only_if_case_insensitive
-          sexp_of_string
-          (capture (string "abc" *> ignore_m (mk "(?i)") *> string "def"))
-          "abcDEF"
-          "abcDEF";
-        should_not_match (mk "(?-i)abcdef") "abcDEF"
-      ;;
-    end)
-  ;;
+    let%test_unit "messing with options" =
+      should_match_unit (ignore_m (mk "abc(?i)def")) "abcDEF";
+      match_only_if_case_insensitive
+        sexp_of_string
+        (capture (string "abc" *> ignore_m (mk "(?i)") *> string "def"))
+        "abcDEF"
+        "abcDEF";
+      should_not_match (mk "(?-i)abcdef") "abcDEF"
+    ;;
+  end
 
   let%test_unit _ =
     let r = of_re2 (Regex.create_exn "a|b") in
@@ -487,32 +479,30 @@ module Body = struct
     let space = c "[[:space:]]"
     let any = c "."
 
-    let%test_module _ =
-      (module struct
-        let all_chars = List.init (Char.to_int Char.max_value + 1) ~f:Char.of_int_exn
+    module%test _ = struct
+      let all_chars = List.init (Char.to_int Char.max_value + 1) ~f:Char.of_int_exn
 
-        let matches_pred regex pred =
-          List.iter all_chars ~f:(fun c ->
-            if pred c
-            then
-              should_match_with_case
-                ~case_sensitive:true
-                sexp_of_char
-                regex
-                (String.of_char c)
-                c
-            else should_not_match_with_case ~case_sensitive:true regex (String.of_char c))
-        ;;
+      let matches_pred regex pred =
+        List.iter all_chars ~f:(fun c ->
+          if pred c
+          then
+            should_match_with_case
+              ~case_sensitive:true
+              sexp_of_char
+              regex
+              (String.of_char c)
+              c
+          else should_not_match_with_case ~case_sensitive:true regex (String.of_char c))
+      ;;
 
-        let%test_unit _ = matches_pred upper Char.is_uppercase
-        let%test_unit _ = matches_pred lower Char.is_lowercase
-        let%test_unit _ = matches_pred alpha Char.is_alpha
-        let%test_unit _ = matches_pred digit Char.is_digit
-        let%test_unit _ = matches_pred alnum Char.is_alphanum
-        let%test_unit _ = matches_pred space Char.is_whitespace
-        let%test_unit _ = matches_pred any (Fn.const true)
-      end)
-    ;;
+      let%test_unit _ = matches_pred upper Char.is_uppercase
+      let%test_unit _ = matches_pred lower Char.is_lowercase
+      let%test_unit _ = matches_pred alpha Char.is_alpha
+      let%test_unit _ = matches_pred digit Char.is_digit
+      let%test_unit _ = matches_pred alnum Char.is_alphanum
+      let%test_unit _ = matches_pred space Char.is_whitespace
+      let%test_unit _ = matches_pred any (Fn.const true)
+    end
 
     let char_list_to_regex_string chars = Regex.escape (String.of_char_list chars)
 
@@ -531,52 +521,50 @@ module Body = struct
           (of_captureless_string ("[^" ^ char_list_to_regex_string chars ^ "]"))
     ;;
 
-    let%test_module _ =
-      (module struct
-        let should_match_char = should_match sexp_of_char
+    module%test _ = struct
+      let should_match_char = should_match sexp_of_char
 
-        let%test_unit _ =
-          should_match_char (one_of [ '\xe2'; '\x82'; '\xac' ]) "\x82" '\x82'
-        ;;
+      let%test_unit _ =
+        should_match_char (one_of [ '\xe2'; '\x82'; '\xac' ]) "\x82" '\x82'
+      ;;
 
-        let%test_unit _ = should_match_char (one_of [ 'x'; 'x' ]) "x" 'x'
-        let%test_unit _ = should_not_match (one_of []) "x"
-        let%test_unit _ = should_match_char (or_ [ one_of []; one_of [ 'x' ] ]) "x" 'x'
-        let%test_unit _ = should_match_char (one_of [ '0'; '-'; '9' ]) "-" '-'
-        let%test_unit _ = should_not_match (one_of [ '0'; '-'; '9' ]) "5"
+      let%test_unit _ = should_match_char (one_of [ 'x'; 'x' ]) "x" 'x'
+      let%test_unit _ = should_not_match (one_of []) "x"
+      let%test_unit _ = should_match_char (or_ [ one_of []; one_of [ 'x' ] ]) "x" 'x'
+      let%test_unit _ = should_match_char (one_of [ '0'; '-'; '9' ]) "-" '-'
+      let%test_unit _ = should_not_match (one_of [ '0'; '-'; '9' ]) "5"
 
-        let%test_unit _ =
-          let difficult_char = one_of [ '^'; '['; ']' ] in
-          let r = all [ difficult_char; difficult_char; difficult_char ] in
-          should_match [%sexp_of: char list] r "^[]" [ '^'; '['; ']' ];
-          should_not_match r "]]x"
-        ;;
+      let%test_unit _ =
+        let difficult_char = one_of [ '^'; '['; ']' ] in
+        let r = all [ difficult_char; difficult_char; difficult_char ] in
+        should_match [%sexp_of: char list] r "^[]" [ '^'; '['; ']' ];
+        should_not_match r "]]x"
+      ;;
 
-        let%test_unit _ = should_not_match (one_of [ '^'; ']' ]) "\\"
-        let%test_unit _ = should_match_char (one_of [ '\\'; 'n' ]) "n" 'n'
-        let%test_unit _ = should_match_char (one_of [ 'x'; '\\' ]) "\\" '\\'
-        let%test_unit _ = should_not_match (one_of [ '.' ]) "a"
+      let%test_unit _ = should_not_match (one_of [ '^'; ']' ]) "\\"
+      let%test_unit _ = should_match_char (one_of [ '\\'; 'n' ]) "n" 'n'
+      let%test_unit _ = should_match_char (one_of [ 'x'; '\\' ]) "\\" '\\'
+      let%test_unit _ = should_not_match (one_of [ '.' ]) "a"
 
-        let%test_unit _ =
-          should_match_string
-            (capture (ignore_m (all [ any; one_of [ '^' ]; any ])))
-            "a^c"
-            "a^c"
-        ;;
+      let%test_unit _ =
+        should_match_string
+          (capture (ignore_m (all [ any; one_of [ '^' ]; any ])))
+          "a^c"
+          "a^c"
+      ;;
 
-        let%test_unit _ = should_not_match (not_one_of [ 'x' ]) "x"
-        let%test_unit _ = should_match_char (not_one_of [ ']' ]) "x" 'x'
-        let%test_unit _ = should_match_char (one_of [ '\000' ]) "\000" '\000'
-        let%test_unit _ = should_match_char (one_of [ 'a'; '\000'; 'b' ]) "b" 'b'
+      let%test_unit _ = should_not_match (not_one_of [ 'x' ]) "x"
+      let%test_unit _ = should_match_char (not_one_of [ ']' ]) "x" 'x'
+      let%test_unit _ = should_match_char (one_of [ '\000' ]) "\000" '\000'
+      let%test_unit _ = should_match_char (one_of [ 'a'; '\000'; 'b' ]) "b" 'b'
 
-        let%test_unit _ =
-          let difficult_char = not_one_of [ '^'; '['; ']' ] in
-          let r = both difficult_char difficult_char in
-          should_match [%sexp_of: char * char] r "ab" ('a', 'b');
-          should_not_match r "a^"
-        ;;
-      end)
-    ;;
+      let%test_unit _ =
+        let difficult_char = not_one_of [ '^'; '['; ']' ] in
+        let r = both difficult_char difficult_char in
+        should_match [%sexp_of: char * char] r "ab" ('a', 'b');
+        should_not_match r "a^"
+      ;;
+    end
   end
 
   module Decimal = struct
@@ -607,33 +595,31 @@ module Body = struct
 
   let any_string = capture (repeat (ignore_m Char.any))
 
-  let%bench_module "big regex" =
-    (module struct
-      let big_regex_benchmark n =
-        let compiled =
-          compile
-            (Fn.apply_n_times
-               ~n
-               (fun x -> map (or_ [ x; capture (string "boo") ]) ~f:(fun x -> x))
-               any_string)
-        in
-        fun () ->
-          [%test_result: string option]
-            (run compiled (String.make n 'x'))
-            ~expect:(Some (String.make n 'x'))
-      ;;
+  module%bench [@name "big regex"] _ = struct
+    let big_regex_benchmark n =
+      let compiled =
+        compile
+          (Fn.apply_n_times
+             ~n
+             (fun x -> map (or_ [ x; capture (string "boo") ]) ~f:(fun x -> x))
+             any_string)
+      in
+      fun () ->
+        [%test_result: string option]
+          (run compiled (String.make n 'x'))
+          ~expect:(Some (String.make n 'x'))
+    ;;
 
-      let%bench_fun ("compilation" [@indexed n = [ 500; 1000; 2000; 10000 ]]) =
-        fun () ->
-        let (_ : unit -> unit) = big_regex_benchmark n in
-        ()
-      ;;
+    let%bench_fun ("compilation" [@indexed n = [ 500; 1000; 2000; 10000 ]]) =
+      fun () ->
+      let (_ : unit -> unit) = big_regex_benchmark n in
+      ()
+    ;;
 
-      let%bench_fun ("matching only" [@indexed n = [ 500; 1000; 2000 ]]) =
-        big_regex_benchmark n
-      ;;
-    end)
-  ;;
+    let%bench_fun ("matching only" [@indexed n = [ 500; 1000; 2000 ]]) =
+      big_regex_benchmark n
+    ;;
+  end
 end
 
 include Body

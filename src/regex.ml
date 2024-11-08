@@ -513,51 +513,47 @@ module Infix = struct
   let ( =~ ) input t = matches t input
 end
 
-let%test_module _ =
-  (module struct
-    let%test _ =
-      let re = create_exn "^(.*)\\\\" in
-      let buf = Bin_prot.Common.create_buf 100 in
-      ignore (Stable.V1_no_options.bin_write_t buf ~pos:0 re : int);
-      Int.( = ) 0 (compare re (Stable.V1_no_options.bin_read_t buf ~pos_ref:(ref 0)))
-    ;;
+module%test _ = struct
+  let%test _ =
+    let re = create_exn "^(.*)\\\\" in
+    let buf = Bin_prot.Common.create_buf 100 in
+    ignore (Stable.V1_no_options.bin_write_t buf ~pos:0 re : int);
+    Int.( = ) 0 (compare re (Stable.V1_no_options.bin_read_t buf ~pos_ref:(ref 0)))
+  ;;
 
-    let%test _ =
-      let re =
-        create_exn ~options:{ Options.default with case_sensitive = false } "^(.*)\\\\"
-      in
-      let buf = Bin_prot.Common.create_buf 100 in
-      ignore (Stable.V2.bin_write_t buf ~pos:0 re : int);
-      Int.( = ) 0 (Stable.V2.compare re (Stable.V2.bin_read_t buf ~pos_ref:(ref 0)))
-    ;;
+  let%test _ =
+    let re =
+      create_exn ~options:{ Options.default with case_sensitive = false } "^(.*)\\\\"
+    in
+    let buf = Bin_prot.Common.create_buf 100 in
+    ignore (Stable.V2.bin_write_t buf ~pos:0 re : int);
+    Int.( = ) 0 (Stable.V2.compare re (Stable.V2.bin_read_t buf ~pos_ref:(ref 0)))
+  ;;
 
-    let%test _ =
-      let re = create_exn "^(.*)\\\\" in
-      Int.( = ) 0 (compare re (Stable.V2.t_of_sexp (sexp_of_t re)))
-    ;;
+  let%test _ =
+    let re = create_exn "^(.*)\\\\" in
+    Int.( = ) 0 (compare re (Stable.V2.t_of_sexp (sexp_of_t re)))
+  ;;
 
-    let%test _ =
-      let foo, a_star, dot_capture =
-        create_exn "foo", create_exn "a*", create_exn "(.)"
-      in
-      let ( < ) a b = compare a b < 0 in
-      a_star < foo && dot_capture < a_star && dot_capture < foo
-    ;;
+  let%test _ =
+    let foo, a_star, dot_capture = create_exn "foo", create_exn "a*", create_exn "(.)" in
+    let ( < ) a b = compare a b < 0 in
+    a_star < foo && dot_capture < a_star && dot_capture < foo
+  ;;
 
-    let%test_unit _ =
-      let re = create_exn "^" in
-      match get_matches_exn re "XYZ" with
-      | [ the_match ] ->
-        [%test_eq: int * int] (0, 0) (Match.get_pos_exn ~sub:(`Index 0) the_match)
-      | other -> raise_s [%sexp "expected exactly one match", (other : Match.t list)]
-    ;;
+  let%test_unit _ =
+    let re = create_exn "^" in
+    match get_matches_exn re "XYZ" with
+    | [ the_match ] ->
+      [%test_eq: int * int] (0, 0) (Match.get_pos_exn ~sub:(`Index 0) the_match)
+    | other -> raise_s [%sexp "expected exactly one match", (other : Match.t list)]
+  ;;
 
-    let%test_unit _ =
-      let re = create_exn "^" in
-      [%test_eq: string] "aXYZ" (replace_exn re "XYZ" ~f:(const "a"))
-    ;;
-  end)
-;;
+  let%test_unit _ =
+    let re = create_exn "^" in
+    [%test_eq: string] "aXYZ" (replace_exn re "XYZ" ~f:(const "a"))
+  ;;
+end
 
 let%bench_fun ("find_submatches with many Nones" [@indexed n = [ 5; 10; 50; 100; 200 ]]) =
   let regex =
