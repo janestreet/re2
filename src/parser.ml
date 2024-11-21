@@ -595,33 +595,31 @@ module Body = struct
 
   let any_string = capture (repeat (ignore_m Char.any))
 
-  let%bench_module "big regex" =
-    (module struct
-      let big_regex_benchmark n =
-        let compiled =
-          compile
-            (Fn.apply_n_times
-               ~n
-               (fun x -> map (or_ [ x; capture (string "boo") ]) ~f:(fun x -> x))
-               any_string)
-        in
-        fun () ->
-          [%test_result: string option]
-            (run compiled (String.make n 'x'))
-            ~expect:(Some (String.make n 'x'))
-      ;;
+  module%bench [@name "big regex"] _ = struct
+    let big_regex_benchmark n =
+      let compiled =
+        compile
+          (Fn.apply_n_times
+             ~n
+             (fun x -> map (or_ [ x; capture (string "boo") ]) ~f:(fun x -> x))
+             any_string)
+      in
+      fun () ->
+        [%test_result: string option]
+          (run compiled (String.make n 'x'))
+          ~expect:(Some (String.make n 'x'))
+    ;;
 
-      let%bench_fun ("compilation" [@indexed n = [ 500; 1000; 2000; 10000 ]]) =
-        fun () ->
-        let (_ : unit -> unit) = big_regex_benchmark n in
-        ()
-      ;;
+    let%bench_fun ("compilation" [@indexed n = [ 500; 1000; 2000; 10000 ]]) =
+      fun () ->
+      let (_ : unit -> unit) = big_regex_benchmark n in
+      ()
+    ;;
 
-      let%bench_fun ("matching only" [@indexed n = [ 500; 1000; 2000 ]]) =
-        big_regex_benchmark n
-      ;;
-    end)
-  ;;
+    let%bench_fun ("matching only" [@indexed n = [ 500; 1000; 2000 ]]) =
+      big_regex_benchmark n
+    ;;
+  end
 end
 
 include Body
