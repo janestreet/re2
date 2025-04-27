@@ -54,7 +54,6 @@ module Body = struct
     | Ok rex -> rex
     | Error e ->
       failwiths
-        ~here:[%here]
         "Re2.Parser.to_re2 BUG: failed to compile"
         (s, e)
         [%sexp_of: string * Error.t]
@@ -576,8 +575,7 @@ module Body = struct
         ~f:(function
           | None | Some '+' -> 1
           | Some '-' -> -1
-          | Some c ->
-            failwiths ~here:[%here] "matched unexpected character" c [%sexp_of: char])
+          | Some c -> failwiths "matched unexpected character" c [%sexp_of: char])
     ;;
 
     let unsigned = map (capture (repeat ~min:1 Char.digit)) ~f:Int.of_string
