@@ -1,8 +1,8 @@
 open Core
 
 module type S = sig
-  (** A value of type ['a t] is a regex that parses ['a]s.
-      The matching is implemented using Re2.
+  (** A value of type ['a t] is a regex that parses ['a]s. The matching is implemented
+      using Re2.
 
       UTF-8 is supported by Re2 but not by this module. This is because we want to use
       [char] as a character type, but that's just wrong in a multibyte encoding. *)
@@ -10,8 +10,8 @@ module type S = sig
 
   include Regex_parser_intf.S with type 'a t := 'a t
 
-  (** [to_regex_string] and [to_re2] both forget what a ['a t] knows
-      about turning the matching strings into ['a]s *)
+  (** [to_regex_string] and [to_re2] both forget what a ['a t] knows about turning the
+      matching strings into ['a]s *)
   val to_regex_string : _ t -> string
 
   val to_re2 : ?case_sensitive:bool -> _ t -> Regex.t

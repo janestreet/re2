@@ -14,3 +14,9 @@
  (flags :standard -w +52)
  (preprocess
   (pps ppx_jane)))
+
+(rule
+ (targets ocaml_runtime_props.h)
+ (deps)
+ (action
+  (bash "echo \"#define OCAML_DEPENDENT_MEM_TRACKING false\" > %{targets}")))

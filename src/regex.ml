@@ -1,8 +1,7 @@
 (** N.B. when I say "[x] is a convenience function around [y]", that just means [x] can be
-    thought of in terms of [y].  In fact, [x] may not be implemented on top of [y], because
+    thought of in terms of [y]. In fact, [x] may not be implemented on top of [y], because
     in many cases (e.g., find/find_all) the convenience functions assume certain defaults
-    that make it more efficient to drop down into C directly.
-*)
+    that make it more efficient to drop down into C directly. *)
 
 open Core
 
@@ -82,8 +81,8 @@ module Exceptions = struct
   (** [Match_failed pattern] *)
   exception Regex_match_failed of string
 
-  (** [Regex_submatch_did_not_capture (s, i)] means the [i]th subpattern in the
-      regex compiled from [s] did not capture a substring. *)
+  (** [Regex_submatch_did_not_capture (s, i)] means the [i]th subpattern in the regex
+      compiled from [s] did not capture a substring. *)
   exception Regex_submatch_did_not_capture of string * int
 
   (** the string is the C library's error message, generally in the form of
@@ -95,18 +94,22 @@ module Exceptions = struct
 
   let () =
     (* register exceptions *)
-    Callback.register_exception
+    (Callback.register_exception [@ocaml.alert "-unsafe_multidomain"])
       "mlre2__Regex_no_such_subpattern"
       (Regex_no_such_subpattern (-1, -1));
-    Callback.register_exception
+    (Callback.register_exception [@ocaml.alert "-unsafe_multidomain"])
       "mlre2__Regex_no_such_named_subpattern"
       (Regex_no_such_named_subpattern ("foo", "bar"));
-    Callback.register_exception "mlre2__Regex_match_failed" (Regex_match_failed "");
-    Callback.register_exception
+    (Callback.register_exception [@ocaml.alert "-unsafe_multidomain"])
+      "mlre2__Regex_match_failed"
+      (Regex_match_failed "");
+    (Callback.register_exception [@ocaml.alert "-unsafe_multidomain"])
       "mlre2__Regex_submatch_did_not_capture"
       (Regex_submatch_did_not_capture ("", 0));
-    Callback.register_exception "mlre2__Regex_compile_failed" (Regex_compile_failed "");
-    Callback.register_exception
+    (Callback.register_exception [@ocaml.alert "-unsafe_multidomain"])
+      "mlre2__Regex_compile_failed"
+      (Regex_compile_failed "");
+    (Callback.register_exception [@ocaml.alert "-unsafe_multidomain"])
       "mlre2__Regex_rewrite_template_invalid"
       (Regex_rewrite_template_invalid ("", ""))
   ;;

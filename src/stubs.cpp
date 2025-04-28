@@ -6,6 +6,7 @@
 #include <iostream>
 #endif
 #include "stubs.h"
+#include "ocaml_runtime_props.h"
 
 uint16_t bitfield_of_options(const RE2::Options& o) {
   uint16_t options = 0;
@@ -64,7 +65,25 @@ extern "C" {
 #include "ocaml_utils.h"
 #include "util.h"
 
+/* We could use [options->max_mem] here, but that's 8MB, a great over-estimate
+   in most cases, so we just return a smaller constant, found by looking
+   at typical regexes after being fed large amount of text.
+
+   If in reality the regexes use more memory than this estimate suggests, then one
+   can imagine a program that allocates lots of regexes and uses too much memory.
+
+   However, this is only a problem if regexes dominate the allocation pattern.
+   In real word programs this situation seems unlikely to occur because
+   at the very least you're likely going to allocate the text you feed to
+   these regexes (and it's necessary to feed text to the regex to make its
+   lazy DFA grow).
+*/
+#define EXPECTED_MEM 50000
+
   void mlre2__custom_regex_finalize(value v_obj) {
+#if OCAML_DEPENDENT_MEM_TRACKING
+    caml_free_dependent_memory(v_obj, EXPECTED_MEM);
+#endif
     delete Regex_val(v_obj);
   }
 
@@ -164,6 +183,9 @@ extern "C" {
   };
 
   void mlre2__custom_regex_multiple_finalize(value v_obj) {
+#if OCAML_DEPENDENT_MEM_TRACKING
+    caml_free_dependent_memory(v_obj, EXPECTED_MEM);
+#endif
     delete RegexSet_val(v_obj);
   }
 
@@ -182,7 +204,13 @@ extern "C" {
 #endif
   };
 
+/* options use ~100 bytes outside the OCaml heap */
+#define REGEX_OPTIONS_DEPENDENT_SIZE 100
+
   void mlre2__custom_regex_options_finalize(value v_obj) {
+#if OCAML_DEPENDENT_MEM_TRACKING
+    caml_free_dependent_memory(v_obj, REGEX_OPTIONS_DEPENDENT_SIZE);
+#endif
     delete RegexOptions_val(v_obj);
   }
 
@@ -248,21 +276,6 @@ extern "C" {
     CAMLreturn0;
   }
 
-/* We could use [options->max_mem] here, but that's 8MB, a great over-estimate
-   in most cases, so we just return a smaller constant, found by looking
-   at typical regexes after being fed large amount of text.
-
-   If in reality the regexes use more memory than this estimate suggests, then one
-   can imagine a program that allocates lots of regexes and uses too much memory.
-
-   However, this is only a problem if regexes dominate the allocation pattern.
-   In real word programs this situation seems unlikely to occur because
-   at the very least you're likely going to allocate the text you feed to
-   these regexes (and it's necessary to feed text to the regex to make its
-   lazy DFA grow).
-*/
-#define EXPECTED_MEM 50000
-
   CAMLprim value mlre2__create_re(value v_options, value v_pattern) {
     value v_retval, v_compile_error;
     const char * c_pat = String_val(v_pattern);
@@ -285,7 +298,9 @@ extern "C" {
     }
 
     v_retval = caml_alloc_custom_mem(&mlre2__custom_regex_ops, sizeof(compiled), EXPECTED_MEM);
-
+#if OCAML_DEPENDENT_MEM_TRACKING
+    caml_alloc_dependent_memory(v_retval, EXPECTED_MEM);
+#endif
     Regex_val(v_retval) = compiled;
 
     return v_retval;
@@ -516,6 +531,9 @@ extern "C" {
     set = new RE2::Set(*RegexOptions_val(v_options), RE2::UNANCHORED);
 
     v_retval = caml_alloc_custom_mem(&mlre2__custom_regex_multiple_ops, sizeof(set), EXPECTED_MEM);
+#if OCAML_DEPENDENT_MEM_TRACKING
+    caml_alloc_dependent_memory(v_retval, EXPECTED_MEM);
+#endif
 
     RegexSet_val(v_retval) = set;
 
@@ -739,10 +757,14 @@ extern "C" {
   /* The caller is responsible for assigning the returned value into a variable
      registered with [CAMLlocal*]. */
   value mlre2__options_alloc_custom_block(void) {
-    return caml_alloc_custom_mem(&mlre2__custom_regex_options_ops, sizeof(RE2::Options *),
-                                 100     /* uses ~100 bytes outside the OCaml heap */
-                                 );
+    value options_v = caml_alloc_custom_mem(&mlre2__custom_regex_options_ops, sizeof(RE2::Options *),
+                                            REGEX_OPTIONS_DEPENDENT_SIZE);
+#if OCAML_DEPENDENT_MEM_TRACKING
+    caml_alloc_dependent_memory(options_v, REGEX_OPTIONS_DEPENDENT_SIZE);
+#endif
+    return options_v;
   }
+
 
   CAMLprim value mlre2__options__create_quiet(value unit) {
     CAMLparam1(unit);
