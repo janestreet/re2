@@ -396,6 +396,14 @@ extern "C" {
                                              RE2::UNANCHORED, NULL, 0));
   }
 
+  CAMLprim value mlre2__matches_bigstring(value v_regex, value v_bigstr) {
+    const char* data = (const char*)Caml_ba_data_val(v_bigstr);
+    intnat size = caml_ba_byte_size(Caml_ba_array_val(v_bigstr));
+    StringPiece str(data, size);
+    return Val_int(Regex_val(v_regex)->Match(str, 0, str.length(),
+                                             RE2::UNANCHORED, NULL, 0));
+  }
+
   CAMLprim value mlre2__matches_substring_no_context_unsafe(value v_regex, value v_str, value v_start, value v_len) {
     StringPiece str(String_val(v_str) + Int_val(v_start), Int_val(v_len));
     return Val_int(Regex_val(v_regex)->Match(str, 0, str.length(),
