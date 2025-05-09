@@ -34,6 +34,9 @@ external cre2__iter_next
 
 external cre2__matches : t -> string -> bool = "mlre2__matches" [@@noalloc]
 
+external cre2__matches_bigstring : t -> Bigstring.t -> bool = "mlre2__matches_bigstring"
+[@@noalloc]
+
 (* Unsafe because we don't do any bound checking. *)
 external cre2__matches_substring_no_context_unsafe
   :  t
@@ -348,6 +351,7 @@ let find_submatches_exn t input =
 
 let find_submatches t input = Or_error.try_with (fun () -> find_submatches_exn t input)
 let matches t input = cre2__matches t input
+let matches_bigstring t input = cre2__matches_bigstring t input
 
 let matches_substring_no_context_exn t input ~pos ~len =
   let input_length = String.length input in

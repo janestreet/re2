@@ -123,6 +123,9 @@ runs even faster if nmatch == 0.
       @return true iff [pattern] matches [input] *)
   val matches : t -> string -> bool
 
+  (** Same as {!matches}, except takes a bigstring. *)
+  val matches_bigstring : t -> Bigstring.t -> bool
+
   (** Same as {!matches}, except it only matches a substring, completely ignoring the
       surrounding (i.e. treating the substring as if it's the full string). Raises if
       [pos] and [len] specify an invalid range (negative values, or the range is outside
