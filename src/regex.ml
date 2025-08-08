@@ -147,7 +147,7 @@ module Stable = struct
         { pattern : string
         ; options : Options.Stable.V2.t
         }
-      [@@deriving bin_io, compare, hash, stable_witness]
+      [@@deriving bin_io, compare ~localize, hash, stable_witness]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
