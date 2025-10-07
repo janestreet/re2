@@ -6,7 +6,7 @@ module Encoding : sig
   type t =
     | Latin1
     | Utf8
-  [@@deriving compare, sexp_of]
+  [@@deriving compare ~localize, sexp_of]
 end
 
 type t =
@@ -24,7 +24,7 @@ type t =
   ; posix_syntax : bool
   ; word_boundary : bool
   }
-[@@deriving compare, sexp_of]
+[@@deriving compare ~localize, sexp_of]
 
 val default : t
 
@@ -51,7 +51,8 @@ module Stable : sig
     module V1 : sig
       type t = Encoding.t [@@deriving hash]
 
-      include Stable_without_comparator_with_witness with type t := t
+      include%template
+        Stable_without_comparator_with_witness [@mode local] with type t := t
     end
   end
 
@@ -60,6 +61,6 @@ module Stable : sig
 
     val is_default : t -> bool
 
-    include Stable_without_comparator_with_witness with type t := t
+    include%template Stable_without_comparator_with_witness [@mode local] with type t := t
   end
 end

@@ -34,6 +34,13 @@ external cre2__iter_next
 
 external cre2__matches : t -> local_ string -> bool = "mlre2__matches" [@@noalloc]
 
+external cre2__matches_bigstring
+  :  t
+  -> local_ Bigstring.t
+  -> bool
+  = "mlre2__matches_bigstring"
+[@@noalloc]
+
 (* Unsafe because we don't do any bound checking. *)
 external cre2__matches_substring_no_context_unsafe
   :  t
@@ -144,7 +151,7 @@ module Stable = struct
         { pattern : string
         ; options : Options.Stable.V2.t
         }
-      [@@deriving bin_io, compare, hash, stable_witness]
+      [@@deriving bin_io, compare ~localize, hash, stable_witness]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -348,6 +355,7 @@ let find_submatches_exn t input =
 
 let find_submatches t input = Or_error.try_with (fun () -> find_submatches_exn t input)
 let matches t (local_ input) = cre2__matches t input
+let matches_bigstring t (local_ input) = cre2__matches_bigstring t input
 
 let matches_substring_no_context_exn t input ~pos ~len =
   let input_length = String.length input in

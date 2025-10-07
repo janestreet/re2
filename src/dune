@@ -13,7 +13,7 @@
  (c_library_flags :standard -lstdc++ -lpthread)
  (flags :standard -w +52)
  (preprocess
-  (pps ppx_jane)))
+  (pps ppx_jane -require-template-extension)))
 
 (rule
  (targets ocaml_runtime_props.h)
