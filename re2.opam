@@ -16,7 +16,7 @@ depends: [
   "ppx_jane"
   "ppx_stable_witness"
   "regex_parser_intf"
-  "conf-g++"           {build}
+  "conf-c++"
   "dune"               {>= "3.17.0"}
 ]
 available: arch != "arm32" & arch != "x86_32"
