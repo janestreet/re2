@@ -162,8 +162,8 @@ module Stable = struct
 
       let sexp_of_t { pattern; options } =
         (* in the vast majority of cases, [t] is created with default options, therefore
-           we would like to treat that case with just a simple Sexp.Atom (more readable
-           in sexp representation) *)
+           we would like to treat that case with just a simple Sexp.Atom (more readable in
+           sexp representation) *)
         if Options.Stable.V2.is_default options
         then Sexp.V1.Atom pattern
         else [%sexp_of: t_long_sexp_serialization] (pattern, options)

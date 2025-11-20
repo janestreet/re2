@@ -15,7 +15,7 @@ generalized zero-width assertions, because they cannot be implemented
 efficiently. The syntax page gives full details.
       v}
 
-      Syntax reference: {:https://github.com/google/re2/wiki/Syntax} **)
+      Syntax reference: {:https://github.com/google/re2/wiki/Syntax} *)
 
   (** Although OCaml strings and C++ strings may legally have internal null bytes, this
       library doesn't handle them correctly by doing conversions via C strings. The
@@ -41,7 +41,7 @@ efficiently. The syntax page gives full details.
     | `Name of string
     ]
 
-  (** [index_of_id t id] resolves subpattern names and indices into indices. **)
+  (** [index_of_id t id] resolves subpattern names and indices into indices. *)
   val index_of_id_exn : t -> id_t -> int
 
   (** The [sub] keyword argument means, omit location information for subpatterns with
