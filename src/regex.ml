@@ -133,7 +133,7 @@ let get_named_capturing_groups t =
   String.Map.of_alist_exn (cre2__get_named_capturing_groups t)
 ;;
 
-let pattern t = cre2__pattern t
+let%template[@alloc a = (heap, stack)] pattern t = cre2__pattern t [@exclave_if_stack a]
 let options t = cre2__options t |> Options.Private.of_c_repr
 let of_string pat = create_exn pat
 let to_string t = cre2__pattern t
@@ -154,15 +154,19 @@ module Stable = struct
         [%expect {| 5081a6119bfacbe1515e8caf368f40e5 |}]
       ;;
 
-      type t_long_sexp_serialization = string * Options.Stable.V2.t [@@deriving sexp]
+      type t_long_sexp_serialization = string * Options.Stable.V2.t
+      [@@deriving sexp ~stackify]
 
-      let sexp_of_t { pattern; options } =
-        (* in the vast majority of cases, [t] is created with default options, therefore
-           we would like to treat that case with just a simple Sexp.Atom (more readable
-           in sexp representation) *)
-        if Options.Stable.V2.is_default options
-        then Sexp.V1.Atom pattern
-        else [%sexp_of: t_long_sexp_serialization] (pattern, options)
+      let%template[@alloc a @ m = (heap_global, stack_local)] sexp_of_t
+        { pattern; options }
+        =
+        (if (* in the vast majority of cases, [t] is created with default options,
+               therefore we would like to treat that case with just a simple Sexp.Atom
+               (more readable in sexp representation) *)
+            Options.Stable.V2.is_default options
+         then Sexp.V1.Atom pattern
+         else [%sexp ((pattern, options) : t_long_sexp_serialization)] [@alloc a])
+        [@exclave_if_stack a]
       ;;
 
       let t_of_sexp = function
@@ -182,11 +186,14 @@ module Stable = struct
         Bin_prot.Shape.Uuid.of_string "1d372eb2-6c4e-11eb-bd12-aa000016704e"
       ;;
 
-      let to_repr t = { Repr.pattern = pattern t; options = options t }
+      let%template[@alloc a @ m = (heap_global, stack_local)] to_repr t =
+        { Repr.pattern = pattern t; options = options t } [@exclave_if_stack a]
+      ;;
+
       let of_repr { Repr.pattern; options } = create_exn ~options pattern
       let to_binable = to_repr
       let of_binable = of_repr
-      let to_sexpable = to_repr
+      let%template[@alloc a = (heap, stack)] to_sexpable = (to_repr [@alloc a])
       let of_sexpable = of_repr
 
       let stable_witness =
@@ -205,6 +212,8 @@ module Stable = struct
       ;;
 
       include Sexpable.Of_sexpable.V1 (Repr) (T)
+
+      include%template Sexpable.Of_sexpable.V1 [@alloc stack] (Repr) (T)
 
       let compare t1 t2 = Repr.compare (T.to_repr t1) (T.to_repr t2)
 
@@ -230,7 +239,10 @@ module Stable = struct
          library for serialization stability. *)
       let stable_witness : t Stable_witness.t = Stable_witness.assert_stable
       let of_string pat = create_exn ~options:Options.default pat
-      let to_string t = pattern t
+
+      let%template[@alloc a = (heap, stack)] to_string t =
+        (pattern [@alloc a]) t [@exclave_if_stack a]
+      ;;
     end
 
     include T
@@ -244,6 +256,8 @@ module Stable = struct
       ;;
 
       include Sexpable.Of_stringable.V1 (T)
+
+      include%template Sexpable.Of_stringable.V1 [@alloc stack] (T)
 
       let compare t1 t2 = String.V1.compare (to_string t1) (to_string t2)
       let hash t = String.V1.hash (to_string t)
@@ -278,7 +292,7 @@ module Match = struct
     ; input : string
     ; captures : (int * int) option array
     }
-  [@@deriving sexp_of]
+  [@@deriving sexp_of ~stackify]
 
   let get_pos_exn ~sub t =
     let i = index_of_id_exn t.rex sub in

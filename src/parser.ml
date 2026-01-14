@@ -4,7 +4,7 @@ include Parser_intf
 
 module Body = struct
   module T = struct
-    (* Requirements on [regex_string]:
+    (*=Requirements on [regex_string]:
        - it must have a valid Re2 syntax;
        - it must not change meaning if concatenated with another allowed regex_string:
          in particular, 'a|b' is not allowed (use e.g. '(?:a|b)' instead).
@@ -221,8 +221,8 @@ module Body = struct
     | [ x ] -> x
     | ts ->
       (* We do a dummy capture for each branch so that we can tell which actually matched,
-         for the purpose of calling the correct [to_result] callback (if any).
-         This extra match is the cause of all the +1s below. *)
+         for the purpose of calling the correct [to_result] callback (if any). This extra
+         match is the cause of all the +1s below. *)
       { regex_string =
           Rope.(
             of_string "(?:"
@@ -513,7 +513,7 @@ module Body = struct
     ;;
 
     let not_one_of = function
-      (* this case is necessary because "[^]blah]" means "none of ]blah" *)
+      (*=this case is necessary because "[^]blah]" means "none of ]blah" *)
       | [] -> any
       | chars ->
         capture_char

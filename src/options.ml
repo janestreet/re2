@@ -6,7 +6,8 @@ module Stable0 = struct
       type t =
         | Latin1
         | Utf8
-      [@@deriving bin_io ~localize, compare ~localize, hash, sexp, stable_witness]
+      [@@deriving
+        bin_io ~localize, compare ~localize, hash, sexp ~stackify, stable_witness]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -15,18 +16,18 @@ module Stable0 = struct
     end
   end
 
-  (* This [Serialization.t] is the serialization of [t] and it's slightly
-     different from [t]:
+  (* This [Serialization.t] is the serialization of [t] and it's slightly different from
+     [t]:
      - Serialization.t has [case_insensitive] instead of [case_sensitive], since
-       Re2.Options.default has [case_sensitive] as the only field that is [true].
-       By using [case_insensitive] we have the nice property where default representation
-       has all bool as false (and an empty sexp).
-     - [max_mem] is stripped (and populated with default) during
-       serialisation, since I don't think it makes sense to serialise this
-     - it seems that some parameters in Re2.Options.t have implied values,
-       so there might be room for improvement of this [t] (at the cost of
-       more complex code here); for example posix_syntax=false implies that
-       some of the other parameters are actually ignored
+       Re2.Options.default has [case_sensitive] as the only field that is [true]. By using
+       [case_insensitive] we have the nice property where default representation has all
+       bool as false (and an empty sexp).
+     - [max_mem] is stripped (and populated with default) during serialisation, since I
+       don't think it makes sense to serialise this
+     - it seems that some parameters in Re2.Options.t have implied values, so there might
+       be room for improvement of this [t] (at the cost of more complex code here); for
+       example posix_syntax=false implies that some of the other parameters are actually
+       ignored
   *)
   module V2 = struct
     module Serialization = struct
@@ -45,7 +46,8 @@ module Stable0 = struct
         ; posix_syntax : bool [@sexp.bool]
         ; word_boundary : bool [@sexp.bool]
         }
-      [@@deriving bin_io ~localize, compare ~localize, hash, sexp, stable_witness]
+      [@@deriving
+        bin_io ~localize, compare ~localize, hash, sexp ~stackify, stable_witness]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -279,6 +281,7 @@ module Stable = struct
       ; posix_syntax
       ; word_boundary
       }
+      [@exclave_if_stack a]
     [@@alloc a = (stack, heap)]
     ;;
 
@@ -314,7 +317,11 @@ module Stable = struct
       }
     ;;
 
-    let sexp_of_t t = Serialization.sexp_of_t (to_serialization t)
+    let%template[@alloc a = (heap, stack)] sexp_of_t t =
+      (Serialization.sexp_of_t [@alloc a])
+        ((to_serialization [@alloc a]) t) [@exclave_if_stack a]
+    ;;
+
     let t_of_sexp sexp = of_serialization (Serialization.t_of_sexp sexp)
     let default () = to_serialization default
     let is_default t = [%compare.equal: Serialization.t] (to_serialization t) (default ())
@@ -333,10 +340,9 @@ module Stable = struct
           let of_binable = of_serialization
         end)
 
-    (* This check verifies the default value produces '()',
-       acknowledging that the fields that we believe are default in C code, are
-       coded as default in the sexp as well. If this changes, a new stable type
-       should be created *)
+    (* This check verifies the default value produces '()', acknowledging that the fields
+       that we believe are default in C code, are coded as default in the sexp as well. If
+       this changes, a new stable type should be created *)
     let%expect_test _ =
       [%sexp_of: Serialization.t] (default ()) |> print_s;
       [%expect {| () |}]

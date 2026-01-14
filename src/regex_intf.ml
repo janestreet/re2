@@ -15,7 +15,7 @@ generalized zero-width assertions, because they cannot be implemented
 efficiently. The syntax page gives full details.
       v}
 
-      Syntax reference: {:https://github.com/google/re2/wiki/Syntax} **)
+      Syntax reference: {:https://github.com/google/re2/wiki/Syntax} *)
 
   (** Although OCaml strings and C++ strings may legally have internal null bytes, this
       library doesn't handle them correctly by doing conversions via C strings. The
@@ -27,7 +27,7 @@ efficiently. The syntax page gives full details.
 
   (** {6 Basic Types} *)
 
-  type t [@@deriving sexp_of]
+  type t [@@deriving sexp_of ~stackify]
 
   include Comparable.S_plain with type t := t
   include Hashable.S_plain with type t := t
@@ -41,7 +41,7 @@ efficiently. The syntax page gives full details.
     | `Name of string
     ]
 
-  (** [index_of_id t id] resolves subpattern names and indices into indices. **)
+  (** [index_of_id t id] resolves subpattern names and indices into indices. *)
   val index_of_id_exn : t -> id_t -> int
 
   (** The [sub] keyword argument means, omit location information for subpatterns with
@@ -175,7 +175,7 @@ runs even faster if nmatch == 0.
 
   module Match : sig
     (** A Match.t is the result of applying a regex to an input string *)
-    type t [@@deriving sexp_of]
+    type t [@@deriving sexp_of ~stackify]
 
     (** If location information has been omitted (e.g., via [~sub]), the error returned is
         [Regex_no_such_subpattern], just as though that subpattern were never defined. *)
@@ -295,6 +295,8 @@ runs even faster if nmatch == 0.
         Stable_comparable.With_stable_witness.V1
         with type t := t
          and type comparator_witness = comparator_witness
+
+      include%template Sexplib0.Sexpable.Sexp_of [@alloc stack] with type t := t
     end
 
     (** [V1_no_options] is the legacy serialization: pattern only, options are lost. *)
@@ -302,6 +304,8 @@ runs even faster if nmatch == 0.
       type nonrec t = t [@@deriving hash, stable_witness]
 
       include Stable_without_comparator with type t := t
+
+      include%template Sexplib0.Sexpable.Sexp_of [@alloc stack] with type t := t
     end
   end
 end

@@ -62,5 +62,6 @@ module Stable : sig
     val is_default : t -> bool
 
     include%template Stable_without_comparator_with_witness [@mode local] with type t := t
+    include%template Sexplib0.Sexpable.Sexp_of [@alloc stack] with type t := t
   end
 end
