@@ -6,7 +6,8 @@ module Stable0 = struct
       type t =
         | Latin1
         | Utf8
-      [@@deriving bin_io ~localize, compare ~localize, hash, sexp, stable_witness]
+      [@@deriving
+        bin_io ~localize, compare ~localize, hash, sexp ~stackify, stable_witness]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -45,7 +46,8 @@ module Stable0 = struct
         ; posix_syntax : bool [@sexp.bool]
         ; word_boundary : bool [@sexp.bool]
         }
-      [@@deriving bin_io ~localize, compare ~localize, hash, sexp, stable_witness]
+      [@@deriving
+        bin_io ~localize, compare ~localize, hash, sexp ~stackify, stable_witness]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -279,6 +281,7 @@ module Stable = struct
       ; posix_syntax
       ; word_boundary
       }
+      [@exclave_if_stack a]
     [@@alloc a = (stack, heap)]
     ;;
 
@@ -314,7 +317,11 @@ module Stable = struct
       }
     ;;
 
-    let sexp_of_t t = Serialization.sexp_of_t (to_serialization t)
+    let%template[@alloc a = (heap, stack)] sexp_of_t t =
+      (Serialization.sexp_of_t [@alloc a])
+        ((to_serialization [@alloc a]) t) [@exclave_if_stack a]
+    ;;
+
     let t_of_sexp sexp = of_serialization (Serialization.t_of_sexp sexp)
     let default () = to_serialization default
     let is_default t = [%compare.equal: Serialization.t] (to_serialization t) (default ())

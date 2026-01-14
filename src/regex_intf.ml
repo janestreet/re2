@@ -27,7 +27,7 @@ efficiently. The syntax page gives full details.
 
   (** {6 Basic Types} *)
 
-  type t [@@deriving sexp_of]
+  type t [@@deriving sexp_of ~stackify]
 
   include Comparable.S_plain with type t := t
   include Hashable.S_plain with type t := t
@@ -175,7 +175,7 @@ runs even faster if nmatch == 0.
 
   module Match : sig
     (** A Match.t is the result of applying a regex to an input string *)
-    type t [@@deriving sexp_of]
+    type t [@@deriving sexp_of ~stackify]
 
     (** If location information has been omitted (e.g., via [~sub]), the error returned is
         [Regex_no_such_subpattern], just as though that subpattern were never defined. *)
@@ -295,6 +295,8 @@ runs even faster if nmatch == 0.
         Stable_comparable.With_stable_witness.V1
         with type t := t
          and type comparator_witness = comparator_witness
+
+      include%template Sexplib0.Sexpable.Sexp_of [@alloc stack] with type t := t
     end
 
     (** [V1_no_options] is the legacy serialization: pattern only, options are lost. *)
@@ -302,6 +304,8 @@ runs even faster if nmatch == 0.
       type nonrec t = t [@@deriving hash, stable_witness]
 
       include Stable_without_comparator with type t := t
+
+      include%template Sexplib0.Sexpable.Sexp_of [@alloc stack] with type t := t
     end
   end
 end
