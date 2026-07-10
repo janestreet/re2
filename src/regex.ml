@@ -219,7 +219,14 @@ module Stable = struct
 
       include%template Sexpable.Of_sexpable.V1 [@alloc stack] (Repr) (T)
 
-      let compare t1 t2 = Repr.compare (T.to_repr t1) (T.to_repr t2)
+      [%%template
+      [@@@alloc a @ m = (heap_global, stack_local)]
+
+      let[@mode m] compare t1 t2 =
+        (Repr.compare [@mode m])
+          ((T.to_repr [@alloc a]) t1)
+          ((T.to_repr [@alloc a]) t2) [@nontail]
+      ;;]
 
       include (val Comparator.V1.make ~compare ~sexp_of_t)
     end
@@ -263,7 +270,15 @@ module Stable = struct
 
       include%template Sexpable.Of_stringable.V1 [@alloc stack] (T)
 
-      let compare t1 t2 = String.V1.compare (to_string t1) (to_string t2)
+      [%%template
+      [@@@alloc a @ m = (stack @ local, heap @ global)]
+
+      let[@mode m] compare t1 t2 =
+        (String.V1.compare [@mode m])
+          ((to_string [@alloc a]) t1)
+          ((to_string [@alloc a]) t2) [@nontail]
+      ;;]
+
       let hash t = String.V1.hash (to_string t)
       let hash_fold_t s t = String.V1.hash_fold_t s (to_string t)
     end
@@ -614,9 +629,12 @@ let%expect_test "behavior of options wrt comparison/hashing" =
   let t2 x = create_exn ~options:{ Options.default with case_sensitive = false } x in
   (let t1 = t1 ""
    and t2 = t2 "" in
-   assert (not ([%compare.equal: t] t1 t2));
-   assert ([%compare.equal: Stable.V1_no_options.t] t1 t2);
-   assert (not ([%compare.equal: Stable.V2.t] t1 t2)));
+   let%template eq_t = [%compare.equal: t] [@mode local] in
+   let%template eq_v1 = [%compare.equal: Stable.V1_no_options.t] [@mode local] in
+   let%template eq_v2 = [%compare.equal: Stable.V2.t] [@mode local] in
+   assert (not (eq_t t1 t2));
+   assert (eq_v1 t1 t2);
+   assert (not (eq_v2 t1 t2)));
   let stable_v2_unequal =
     List.filter [ ""; "1"; "2"; "3" ] ~f:(fun str ->
       let h hash = hash (t1 str) = hash (t2 str) in
@@ -641,7 +659,7 @@ let%test_unit "t preserved via Stable.V2.sexp_of_t and Stable.V2.t_of_sexp" =
       [%test_eq: string * Options.t] (f_pattern t, f_options t) (pattern, options))
 ;;
 
-include Comparable.Make_plain_using_comparator (struct
+include%template Comparable.Make_plain_using_comparator [@mode local] (struct
     type nonrec t = t
 
     include Stable.V2.T_serializable_comparable

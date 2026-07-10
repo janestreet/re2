@@ -35,7 +35,7 @@ module Stable0 = struct
         { case_insensitive : bool [@sexp.bool]
         ; dot_nl : bool [@sexp.bool]
         ; encoding : Encoding.V1.t
-             [@sexp.default Encoding.V1.Utf8] [@sexp_drop_default.compare]
+             [@sexp.default Encoding.V1.Utf8] [@sexp_drop_default.compare.local]
         ; literal : bool [@sexp.bool]
         ; log_errors : bool [@sexp.bool]
         ; longest_match : bool [@sexp.bool]
@@ -324,7 +324,10 @@ module Stable = struct
 
     let t_of_sexp sexp = of_serialization (Serialization.t_of_sexp sexp)
     let default () = to_serialization default
-    let is_default t = [%compare.equal: Serialization.t] (to_serialization t) (default ())
+
+    let%template is_default t =
+      ([%compare.equal: Serialization.t] [@mode local]) (to_serialization t) (default ())
+    ;;
 
     include%template
       Core.Binable.Of_binable_without_uuid [@mode local] [@alert "-legacy"]

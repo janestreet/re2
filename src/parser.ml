@@ -332,11 +332,9 @@ module Body = struct
         ~f:
           ([%test_pred: int option * int option * string * string option]
              (fun (min, max, inp, result) ->
+                let%template compare = [%compare: string option] [@mode local] in
                 let a's = capture (repeat ?min ~max (string "a")) in
-                0
-                = [%compare: string option]
-                    result
-                    (run (compile (string "c" *> a's <* string "b")) inp)))
+                0 = compare result (run (compile (string "c" *> a's <* string "b")) inp)))
         [ None, None, "caaab", Some "aaa"
         ; None, None, "cb", Some ""
         ; Some 0, None, "cb", Some ""

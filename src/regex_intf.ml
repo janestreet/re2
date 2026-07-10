@@ -1,6 +1,6 @@
 open Core
 
-module type S = sig
+module type%template [@mode m = (local, global)] S = sig
   (** These are OCaml bindings for Google's re2 library. Quoting from the re2 homepage:
 
       {v
@@ -29,7 +29,7 @@ efficiently. The syntax page gives full details.
 
   type t [@@deriving sexp_of ~stackify]
 
-  include Comparable.S_plain with type t := t
+  include Comparable.S_plain [@mode m] with type t := t
   include Hashable.S_plain with type t := t
 
   type regex = t
