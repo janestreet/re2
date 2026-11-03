@@ -6,8 +6,7 @@ module Stable0 = struct
       type t =
         | Latin1
         | Utf8
-      [@@deriving
-        bin_io ~localize, compare ~localize, hash, sexp ~stackify, stable_witness]
+      [@@deriving bin_io, compare, hash, sexp, stable_witness]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -46,8 +45,7 @@ module Stable0 = struct
         ; posix_syntax : bool [@sexp.bool]
         ; word_boundary : bool [@sexp.bool]
         }
-      [@@deriving
-        bin_io ~localize, compare ~localize, hash, sexp ~stackify, stable_witness]
+      [@@deriving bin_io, compare, hash, sexp, stable_witness]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
@@ -63,10 +61,10 @@ module Encoding = struct
   type t = Stable0.Encoding.V1.t =
     | Latin1
     | Utf8
-  [@@deriving compare ~localize, equal ~localize, sexp_of]
+  [@@deriving compare, equal, sexp_of]
 
   module C_repr = struct
-    type t = int [@@deriving compare ~localize, sexp_of]
+    type t = int [@@deriving compare, sexp_of]
 
     let equal = Int.( = )
 
@@ -109,9 +107,7 @@ type t =
   ; word_boundary : bool
   }
 [@@deriving
-  compare ~localize
-  , fields ~getters ~iterators:make_creator ~direct_iterators:iter
-  , sexp_of]
+  compare, fields ~getters ~iterators:make_creator ~direct_iterators:iter, sexp_of]
 
 module C_repr = struct
   type t
@@ -249,9 +245,9 @@ module Stable = struct
       ; posix_syntax : bool
       ; word_boundary : bool
       }
-    [@@deriving compare ~localize, hash, stable_witness]
+    [@@deriving compare, hash, stable_witness]
 
-    let%template to_serialization
+    let to_serialization
       { case_sensitive
       ; dot_nl
       ; encoding
@@ -281,8 +277,6 @@ module Stable = struct
       ; posix_syntax
       ; word_boundary
       }
-      [@exclave_if_stack a]
-    [@@alloc a = (stack, heap)]
     ;;
 
     let of_serialization
@@ -317,29 +311,18 @@ module Stable = struct
       }
     ;;
 
-    let%template[@alloc a = (heap, stack)] sexp_of_t t =
-      (Serialization.sexp_of_t [@alloc a])
-        ((to_serialization [@alloc a]) t) [@exclave_if_stack a]
-    ;;
-
+    let sexp_of_t t = Serialization.sexp_of_t (to_serialization t)
     let t_of_sexp sexp = of_serialization (Serialization.t_of_sexp sexp)
     let default () = to_serialization default
+    let is_default t = [%compare.equal: Serialization.t] (to_serialization t) (default ())
 
-    let%template is_default t =
-      ([%compare.equal: Serialization.t] [@mode local]) (to_serialization t) (default ())
-    ;;
-
-    include%template
-      Core.Binable.Of_binable_without_uuid [@mode local] [@alert "-legacy"]
+    include
+      Core.Binable.Of_binable_without_uuid [@alert "-legacy"]
         (Serialization)
         (struct
           type nonrec t = t
 
-          let to_binable = (to_serialization [@alloc a])
-          [@@alloc a @ m = (stack_local, heap_global)]
-          ;;
-
-          let[@mode local] to_binable = (to_binable [@alloc stack])
+          let to_binable = to_serialization
           let of_binable = of_serialization
         end)
 

@@ -133,7 +133,7 @@ let get_named_capturing_groups t =
   String.Map.of_alist_exn (cre2__get_named_capturing_groups t)
 ;;
 
-let%template[@alloc a = (heap, stack)] pattern t = cre2__pattern t [@exclave_if_stack a]
+let pattern t = cre2__pattern t
 let options t = cre2__options t |> Options.Private.of_c_repr
 let of_string pat = create_exn pat
 let to_string t = cre2__pattern t
@@ -147,26 +147,22 @@ module Stable = struct
         { pattern : string
         ; options : Options.Stable.V2.t
         }
-      [@@deriving bin_io, compare ~localize, hash, stable_witness]
+      [@@deriving bin_io, compare, hash, stable_witness]
 
       let%expect_test _ =
         print_endline [%bin_digest: t];
         [%expect {| 5081a6119bfacbe1515e8caf368f40e5 |}]
       ;;
 
-      type t_long_sexp_serialization = string * Options.Stable.V2.t
-      [@@deriving sexp ~stackify]
+      type t_long_sexp_serialization = string * Options.Stable.V2.t [@@deriving sexp]
 
-      let%template[@alloc a @ m = (heap_global, stack_local)] sexp_of_t
-        { pattern; options }
-        =
-        (if (* in the vast majority of cases, [t] is created with default options,
-               therefore we would like to treat that case with just a simple Sexp.Atom
-               (more readable in sexp representation) *)
-            Options.Stable.V2.is_default options
-         then Sexp.V1.Atom pattern
-         else [%sexp ((pattern, options) : t_long_sexp_serialization)] [@alloc a])
-        [@exclave_if_stack a]
+      let sexp_of_t { pattern; options } =
+        if (* in the vast majority of cases, [t] is created with default options,
+              therefore we would like to treat that case with just a simple Sexp.Atom
+              (more readable in sexp representation) *)
+           Options.Stable.V2.is_default options
+        then Sexp.V1.Atom pattern
+        else [%sexp ((pattern, options) : t_long_sexp_serialization)]
       ;;
 
       let t_of_sexp = function
@@ -186,14 +182,11 @@ module Stable = struct
         Bin_prot.Shape.Uuid.of_string "1d372eb2-6c4e-11eb-bd12-aa000016704e"
       ;;
 
-      let%template[@alloc a @ m = (heap_global, stack_local)] to_repr t =
-        { Repr.pattern = pattern t; options = options t } [@exclave_if_stack a]
-      ;;
-
+      let to_repr t = { Repr.pattern = pattern t; options = options t }
       let of_repr { Repr.pattern; options } = create_exn ~options pattern
       let to_binable = to_repr
       let of_binable = of_repr
-      let%template[@alloc a = (heap, stack)] to_sexpable = (to_repr [@alloc a])
+      let to_sexpable = to_repr
       let of_sexpable = of_repr
 
       let stable_witness =
@@ -212,17 +205,9 @@ module Stable = struct
       ;;
 
       include Sexpable.Of_sexpable.V1 (Repr) (T)
+      include Sexpable.Of_sexpable.V1 (Repr) (T)
 
-      include%template Sexpable.Of_sexpable.V1 [@alloc stack] (Repr) (T)
-
-      [%%template
-      [@@@alloc a @ m = (heap_global, stack_local)]
-
-      let[@mode m] compare t1 t2 =
-        (Repr.compare [@mode m])
-          ((T.to_repr [@alloc a]) t1)
-          ((T.to_repr [@alloc a]) t2) [@nontail]
-      ;;]
+      let compare t1 t2 = Repr.compare (T.to_repr t1) (T.to_repr t2) [@nontail]
 
       include (val Comparator.V1.make ~compare ~sexp_of_t)
     end
@@ -246,10 +231,7 @@ module Stable = struct
          library for serialization stability. *)
       let stable_witness : t Stable_witness.t = Stable_witness.assert_stable
       let of_string pat = create_exn ~options:Options.default pat
-
-      let%template[@alloc a = (heap, stack)] to_string t =
-        (pattern [@alloc a]) t [@exclave_if_stack a]
-      ;;
+      let to_string t = pattern t
     end
 
     include T
@@ -263,18 +245,9 @@ module Stable = struct
       ;;
 
       include Sexpable.Of_stringable.V1 (T)
+      include Sexpable.Of_stringable.V1 (T)
 
-      include%template Sexpable.Of_stringable.V1 [@alloc stack] (T)
-
-      [%%template
-      [@@@alloc a @ m = (stack @ local, heap @ global)]
-
-      let[@mode m] compare t1 t2 =
-        (String.V1.compare [@mode m])
-          ((to_string [@alloc a]) t1)
-          ((to_string [@alloc a]) t2) [@nontail]
-      ;;]
-
+      let compare t1 t2 = String.V1.compare (to_string t1) (to_string t2) [@nontail]
       let hash t = String.V1.hash (to_string t)
       let hash_fold_t s t = String.V1.hash_fold_t s (to_string t)
     end
@@ -307,7 +280,7 @@ module Match = struct
     ; input : string
     ; captures : (int * int) option array
     }
-  [@@deriving sexp_of ~stackify]
+  [@@deriving sexp_of]
 
   let get_pos_exn ~sub t =
     let i = index_of_id_exn t.rex sub in
@@ -625,9 +598,9 @@ let%expect_test "behavior of options wrt comparison/hashing" =
   let t2 x = create_exn ~options:{ Options.default with case_sensitive = false } x in
   (let t1 = t1 ""
    and t2 = t2 "" in
-   let%template eq_t = [%compare.equal: t] [@mode local] in
-   let%template eq_v1 = [%compare.equal: Stable.V1_no_options.t] [@mode local] in
-   let%template eq_v2 = [%compare.equal: Stable.V2.t] [@mode local] in
+   let eq_t = [%compare.equal: t] in
+   let eq_v1 = [%compare.equal: Stable.V1_no_options.t] in
+   let eq_v2 = [%compare.equal: Stable.V2.t] in
    assert (not (eq_t t1 t2));
    assert (eq_v1 t1 t2);
    assert (not (eq_v2 t1 t2)));
@@ -655,7 +628,7 @@ let%test_unit "t preserved via Stable.V2.sexp_of_t and Stable.V2.t_of_sexp" =
       [%test_eq: string * Options.t] (f_pattern t, f_options t) (pattern, options))
 ;;
 
-include%template Comparable.Make_plain_using_comparator [@mode local] (struct
+include Comparable.Make_plain_using_comparator (struct
     type nonrec t = t
 
     include Stable.V2.T_serializable_comparable

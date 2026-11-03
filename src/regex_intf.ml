@@ -1,6 +1,6 @@
 open Core
 
-module type%template [@mode m = (local, global)] S = sig
+module type S = sig
   (** These are OCaml bindings for Google's re2 library. Quoting from the re2 homepage:
 
       {v
@@ -27,9 +27,9 @@ efficiently. The syntax page gives full details.
 
   (** {6 Basic Types} *)
 
-  type t [@@deriving sexp_of ~stackify]
+  type t [@@deriving sexp_of]
 
-  include Comparable.S_plain [@mode m] with type t := t
+  include Comparable.S_plain with type t := t
   include Hashable.S_plain with type t := t
 
   type regex = t
@@ -175,7 +175,7 @@ runs even faster if nmatch == 0.
 
   module Match : sig
     (** A Match.t is the result of applying a regex to an input string *)
-    type t [@@deriving sexp_of ~stackify]
+    type t [@@deriving sexp_of]
 
     (** If location information has been omitted (e.g., via [~sub]), the error returned is
         [Regex_no_such_subpattern], just as though that subpattern were never defined. *)
@@ -296,7 +296,7 @@ runs even faster if nmatch == 0.
         with type t := t
          and type comparator_witness = comparator_witness
 
-      include%template Sexplib0.Sexpable.Sexp_of [@alloc stack] with type t := t
+      include Sexplib0.Sexpable.Sexp_of with type t := t
     end
 
     (** [V1_no_options] is the legacy serialization: pattern only, options are lost. *)
@@ -304,8 +304,7 @@ runs even faster if nmatch == 0.
       type nonrec t = t [@@deriving hash, stable_witness]
 
       include Stable_without_comparator with type t := t
-
-      include%template Sexplib0.Sexpable.Sexp_of [@alloc stack] with type t := t
+      include Sexplib0.Sexpable.Sexp_of with type t := t
     end
   end
 end
